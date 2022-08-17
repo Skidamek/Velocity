@@ -70,30 +70,6 @@ import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.EventLoopGroup;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.InetSocketAddress;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.security.AccessController;
-import java.security.KeyPair;
-import java.security.PrivilegedAction;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.IntFunction;
-import java.util.stream.Collectors;
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.audience.ForwardingAudience;
 import net.kyori.adventure.key.Key;
@@ -107,6 +83,20 @@ import org.checkerframework.checker.nullness.qual.EnsuresNonNull;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.InetSocketAddress;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.security.AccessController;
+import java.security.KeyPair;
+import java.security.PrivilegedAction;
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.IntFunction;
+import java.util.stream.Collectors;
 
 public class VelocityServer implements ProxyServer, ForwardingAudience {
 
@@ -219,7 +209,7 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
     commandManager.register("help", (SimpleCommand) invocation -> {
       logger.info("Currently registered velocity commands:");
       for (CommandNode<CommandSource> child : commandManager.dispatcher.getRoot().getChildren()) {
-        logger.info(child.getName() + " Usage: "+ child.getUsageText());
+        logger.info(child.getName() + " Usage: "+ child.getUsageText().replaceAll("/", ""));
       }
     }, "?");
 
@@ -228,6 +218,8 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
     for (Map.Entry<String, String> entry : configuration.getServers().entrySet()) {
       servers.register(new ServerInfo(entry.getKey(), AddressUtil.parseAddress(entry.getValue())));
     }
+
+
 
     ipAttemptLimiter = Ratelimiters.createWithMilliseconds(configuration.getLoginRatelimit());
     loadPlugins();

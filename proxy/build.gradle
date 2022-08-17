@@ -84,6 +84,12 @@ dependencies {
     implementation 'space.vectrix.flare:flare:2.0.0'
     implementation 'space.vectrix.flare:flare-fastutil:2.0.0'
 
+    implementation "com.moandjiezana.toml:toml4j:0.7.2"
+    implementation "net.lingala.zip4j:zip4j:2.11.1"
+    implementation "mysql:mysql-connector-java:8.0.24"
+    implementation "org.springframework.security:spring-security-core:5.7.2"
+    implementation "com.github.Osiris-Team:Dyml:9.4.2"
+
     compileOnly 'com.github.spotbugs:spotbugs-annotations:4.4.0'
 
     testImplementation "org.junit.jupiter:junit-jupiter-api:${junitVersion}"

@@ -17,12 +17,6 @@
 
 package com.velocitypowered.proxy.connection.client;
 
-import static com.google.common.net.UrlEscapers.urlFormParameterEscaper;
-import static com.velocitypowered.proxy.VelocityServer.GENERAL_GSON;
-import static com.velocitypowered.proxy.connection.VelocityConstants.EMPTY_BYTE_ARRAY;
-import static com.velocitypowered.proxy.crypto.EncryptionUtils.decryptRsa;
-import static com.velocitypowered.proxy.crypto.EncryptionUtils.generateServerId;
-
 import com.google.common.base.Preconditions;
 import com.google.common.primitives.Longs;
 import com.velocitypowered.api.event.connection.PreLoginEvent;
@@ -40,6 +34,14 @@ import com.velocitypowered.proxy.protocol.packet.EncryptionResponse;
 import com.velocitypowered.proxy.protocol.packet.LoginPluginResponse;
 import com.velocitypowered.proxy.protocol.packet.ServerLogin;
 import io.netty.buffer.ByteBuf;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.asynchttpclient.ListenableFuture;
+import org.asynchttpclient.Response;
+import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
+
 import java.net.InetSocketAddress;
 import java.security.GeneralSecurityException;
 import java.security.KeyPair;
@@ -48,13 +50,12 @@ import java.util.Arrays;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ThreadLocalRandom;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.asynchttpclient.ListenableFuture;
-import org.asynchttpclient.Response;
-import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
+
+import static com.google.common.net.UrlEscapers.urlFormParameterEscaper;
+import static com.velocitypowered.proxy.VelocityServer.GENERAL_GSON;
+import static com.velocitypowered.proxy.connection.VelocityConstants.EMPTY_BYTE_ARRAY;
+import static com.velocitypowered.proxy.crypto.EncryptionUtils.decryptRsa;
+import static com.velocitypowered.proxy.crypto.EncryptionUtils.generateServerId;
 
 public class InitialLoginSessionHandler implements MinecraftSessionHandler {
 

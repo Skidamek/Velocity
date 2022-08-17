@@ -29,6 +29,13 @@ import com.velocitypowered.api.proxy.config.ProxyConfig;
 import com.velocitypowered.api.util.Favicon;
 import com.velocitypowered.proxy.util.AddressUtil;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -39,18 +46,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.security.SecureRandom;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Random;
-import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import java.util.*;
 
 public class VelocityConfiguration implements ProxyConfig {
 
