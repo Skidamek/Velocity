@@ -56,14 +56,14 @@ import org.jetbrains.annotations.VisibleForTesting;
 
 public class VelocityCommandManager implements CommandManager {
 
-  private final @GuardedBy("lock") CommandDispatcher<CommandSource> dispatcher;
+  public final @GuardedBy("lock") CommandDispatcher<CommandSource> dispatcher;
   private final ReadWriteLock lock;
 
   private final VelocityEventManager eventManager;
   private final List<CommandRegistrar<?>> registrars;
   private final SuggestionsProvider<CommandSource> suggestionsProvider;
   private final CommandGraphInjector<CommandSource> injector;
-  public final Map<String, CommandMeta> commandMetas;
+  private final Map<String, CommandMeta> commandMetas;
 
   /**
    * Constructs a command manager.

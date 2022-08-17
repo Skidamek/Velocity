@@ -22,6 +22,8 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.mojang.brigadier.tree.CommandNode;
+import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.command.SimpleCommand;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
 import com.velocitypowered.api.event.proxy.ProxyReloadEvent;
@@ -214,7 +216,12 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
     commandManager.register("shutdown", ShutdownCommand.command(this),
         "end", "stop");
     new GlistCommand(this).register();
-
+    commandManager.register("help", (SimpleCommand) invocation -> {
+      logger.info("Currently registered velocity commands:");
+      for (CommandNode<CommandSource> child : commandManager.dispatcher.getRoot().getChildren()) {
+        logger.info(child.getName() + " Usage: "+ child.getUsageText());
+      }
+    }, "?");
 
     this.doStartupConfigLoad();
 
