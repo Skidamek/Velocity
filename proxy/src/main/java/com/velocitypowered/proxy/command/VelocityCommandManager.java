@@ -63,7 +63,7 @@ public class VelocityCommandManager implements CommandManager {
   private final List<CommandRegistrar<?>> registrars;
   private final SuggestionsProvider<CommandSource> suggestionsProvider;
   private final CommandGraphInjector<CommandSource> injector;
-  private final Map<String, CommandMeta> commandMetas;
+  public final Map<String, CommandMeta> commandMetas;
 
   /**
    * Constructs a command manager.

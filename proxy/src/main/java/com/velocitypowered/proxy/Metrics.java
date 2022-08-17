@@ -109,8 +109,8 @@ public class Metrics {
           new SingleLineChart("managed_servers", () -> server.getAllServers().size())
       );
       metrics.addCustomChart(
-          new SimplePie("online_mode",
-              () -> server.getConfiguration().isOnlineMode() ? "online" : "offline")
+          new SimplePie("allow_offline_players",
+              () -> ""+server.getConfiguration().isAllowOfflinePlayers())
       );
       metrics.addCustomChart(new SimplePie("velocity_version",
           () -> server.getVersion().getVersion()));

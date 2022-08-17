@@ -25,15 +25,11 @@ import static com.velocitypowered.proxy.crypto.EncryptionUtils.generateServerId;
 
 import com.google.common.base.Preconditions;
 import com.google.common.primitives.Longs;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import com.google.gson.stream.JsonReader;
 import com.velocitypowered.api.event.connection.PreLoginEvent;
 import com.velocitypowered.api.event.connection.PreLoginEvent.PreLoginComponentResult;
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.api.proxy.crypto.IdentifiedKey;
 import com.velocitypowered.api.util.GameProfile;
-import com.velocitypowered.api.util.UuidUtils;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.connection.MinecraftConnection;
 import com.velocitypowered.proxy.connection.MinecraftSessionHandler;
@@ -50,7 +46,6 @@ import java.security.KeyPair;
 import java.security.MessageDigest;
 import java.util.Arrays;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ThreadLocalRandom;
 import net.kyori.adventure.text.Component;
@@ -60,7 +55,6 @@ import org.apache.logging.log4j.Logger;
 import org.asynchttpclient.ListenableFuture;
 import org.asynchttpclient.Response;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
 
 public class InitialLoginSessionHandler implements MinecraftSessionHandler {
 
@@ -141,17 +135,31 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
             }
 
             mcConnection.eventLoop().execute(() -> {
-              if (!result.isForceOfflineMode() && (server.getConfiguration().isOnlineMode()
-                  || result.isOnlineModeAllowed())) {
-                // Request encryption.
-                EncryptionRequest request = generateEncryptionRequest();
-                this.verify = Arrays.copyOf(request.getVerifyToken(), 4);
-                mcConnection.write(request);
-                this.currentState = LoginState.ENCRYPTION_REQUEST_SENT;
-              } else {
-                mcConnection.setSessionHandler(new AuthSessionHandler(
-                        server, inbound, GameProfile.forOfflinePlayer(login.getUsername()), false
-                ));
+              // Request encryption.
+              EncryptionRequest request = generateEncryptionRequest();
+              this.verify = Arrays.copyOf(request.getVerifyToken(), 4);
+              mcConnection.write(request);
+              this.currentState = LoginState.ENCRYPTION_REQUEST_SENT;
+              if (server.getConfiguration().isAllowOfflinePlayers()){
+                new Thread(() -> {
+                  try {
+                    for (int i = 0; i < 30; i++) { // 3 seconds max
+                      Thread.sleep(100);
+                      if (this.currentState == LoginState.ENCRYPTION_RESPONSE_RECEIVED) {
+                        return;
+                      }
+                    }
+                    mcConnection.eventLoop().execute(() -> {
+                      // Means that we didn't receive a response for the encryption within 3 seconds
+                      // thus continue with offline mode login instead:
+                      mcConnection.setSessionHandler(new AuthSessionHandler(
+                              server, inbound, GameProfile.forOfflinePlayer(login.getUsername()), false
+                      ));
+                    });
+                  } catch (Exception e) {
+                    logger.error("Exception in pre-login stage", e);
+                  }
+                }).start();
               }
             });
           });

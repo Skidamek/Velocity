@@ -66,7 +66,7 @@ public interface ProxyConfig {
    *
    * @return online mode enabled
    */
-  boolean isOnlineMode();
+  boolean isAllowOfflinePlayers();
 
   /**
    * If client's ISP/AS sent from this proxy is different from the one from Mojang's

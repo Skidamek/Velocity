@@ -12,8 +12,11 @@ motd = "&#09add3A Velocity Server"
 # on the number of players online.)
 show-max-players = 500
 
-# Should we authenticate players with Mojang? By default, this is on.
-online-mode = true
+# By default players get authenticated via Mojang and are allowed to join.
+# If the authentication fails however the player is sent to the limbo-auth server
+# and required to register to be able to play. You can disable this
+# and only allow players that actually bought the game to join.
+allow-offline-players = true
 
 # Should the proxy enforce the new public key security standard? By default, this is on.
 force-key-authentication = true

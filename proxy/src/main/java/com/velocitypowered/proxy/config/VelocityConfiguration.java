@@ -59,7 +59,7 @@ public class VelocityConfiguration implements ProxyConfig {
   @Expose private String bind = "0.0.0.0:25577";
   @Expose private String motd = "&3A Velocity Server";
   @Expose private int showMaxPlayers = 500;
-  @Expose private boolean onlineMode = true;
+  @Expose private boolean allowOfflinePlayers = true;
   @Expose private boolean preventClientProxyConnections = false;
   @Expose private PlayerInfoForwarding playerInfoForwardingMode = PlayerInfoForwarding.NONE;
   private byte[] forwardingSecret = generateRandomString(12).getBytes(StandardCharsets.UTF_8);
@@ -85,7 +85,7 @@ public class VelocityConfiguration implements ProxyConfig {
     this.metrics = metrics;
   }
 
-  private VelocityConfiguration(String bind, String motd, int showMaxPlayers, boolean onlineMode,
+  private VelocityConfiguration(String bind, String motd, int showMaxPlayers, boolean allowOfflinePlayers,
       boolean preventClientProxyConnections, boolean announceForge,
       PlayerInfoForwarding playerInfoForwardingMode, byte[] forwardingSecret,
       boolean onlineModeKickExistingPlayers, PingPassthroughMode pingPassthrough,
@@ -94,7 +94,7 @@ public class VelocityConfiguration implements ProxyConfig {
     this.bind = bind;
     this.motd = motd;
     this.showMaxPlayers = showMaxPlayers;
-    this.onlineMode = onlineMode;
+    this.allowOfflinePlayers = allowOfflinePlayers;
     this.preventClientProxyConnections = preventClientProxyConnections;
     this.announceForge = announceForge;
     this.playerInfoForwardingMode = playerInfoForwardingMode;
@@ -127,11 +127,6 @@ public class VelocityConfiguration implements ProxyConfig {
         logger.error("'bind' option does not specify a valid IP address.", e);
         valid = false;
       }
-    }
-
-    if (!onlineMode) {
-      logger.warn("The proxy is running in offline mode! This is a security risk and you will NOT "
-          + "receive any support!");
     }
 
     switch (playerInfoForwardingMode) {
@@ -271,8 +266,8 @@ public class VelocityConfiguration implements ProxyConfig {
   }
 
   @Override
-  public boolean isOnlineMode() {
-    return onlineMode;
+  public boolean isAllowOfflinePlayers() {
+    return allowOfflinePlayers;
   }
 
   @Override
@@ -392,7 +387,7 @@ public class VelocityConfiguration implements ProxyConfig {
         .add("bind", bind)
         .add("motd", motd)
         .add("showMaxPlayers", showMaxPlayers)
-        .add("onlineMode", onlineMode)
+        .add("allow-offline-players", allowOfflinePlayers)
         .add("playerInfoForwardingMode", playerInfoForwardingMode)
         .add("forwardingSecret", forwardingSecret)
         .add("announceForge", announceForge)

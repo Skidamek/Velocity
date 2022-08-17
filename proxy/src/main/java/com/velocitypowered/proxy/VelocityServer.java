@@ -22,6 +22,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.velocitypowered.api.command.SimpleCommand;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
 import com.velocitypowered.api.event.proxy.ProxyReloadEvent;
 import com.velocitypowered.api.event.proxy.ProxyShutdownEvent;
@@ -213,6 +214,7 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
     commandManager.register("shutdown", ShutdownCommand.command(this),
         "end", "stop");
     new GlistCommand(this).register();
+
 
     this.doStartupConfigLoad();
 
@@ -583,7 +585,7 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
    * @return {@code true} if we can register the connection, {@code false} if not
    */
   public boolean canRegisterConnection(ConnectedPlayer connection) {
-    if (configuration.isOnlineMode() && configuration.isOnlineModeKickExistingPlayers()) {
+    if (configuration.isAllowOfflinePlayers() && configuration.isOnlineModeKickExistingPlayers()) {
       return true;
     }
     String lowerName = connection.getUsername().toLowerCase(Locale.US);
