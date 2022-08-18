@@ -39,6 +39,8 @@ import com.velocitypowered.api.proxy.server.ServerInfo;
 import com.velocitypowered.api.util.Favicon;
 import com.velocitypowered.api.util.GameProfile;
 import com.velocitypowered.api.util.ProxyVersion;
+import com.velocitypowered.proxy.auth.VelocityAuth;
+import com.velocitypowered.proxy.auth.commands.Command;
 import com.velocitypowered.proxy.command.VelocityCommandManager;
 import com.velocitypowered.proxy.command.builtin.GlistCommand;
 import com.velocitypowered.proxy.command.builtin.ServerCommand;
@@ -84,6 +86,7 @@ import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
@@ -138,7 +141,7 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
   private final VelocityChannelRegistrar channelRegistrar = new VelocityChannelRegistrar();
   private ServerListPingHandler serverListPingHandler;
 
-  VelocityServer(final ProxyOptions options) {
+  VelocityServer(final ProxyOptions options) throws Exception {
     pluginManager = new VelocityPluginManager(this);
     eventManager = new VelocityEventManager(pluginManager);
     commandManager = new VelocityCommandManager(eventManager);
@@ -190,7 +193,7 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
 
   @EnsuresNonNull({"serverKeyPair", "servers", "pluginManager", "eventManager", "scheduler",
       "console", "cm", "configuration"})
-  void start() {
+  void start() throws Exception {
     logger.info("Booting up {} {}...", getVersion().getName(), getVersion().getVersion());
     console.setupStreams();
 
@@ -209,7 +212,7 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
     commandManager.register("help", (SimpleCommand) invocation -> {
       logger.info("Currently registered velocity commands:");
       for (CommandNode<CommandSource> child : commandManager.dispatcher.getRoot().getChildren()) {
-        logger.info(child.getName() + " Usage: "+ child.getUsageText().replaceAll("/", ""));
+        logger.info(child.getName());
       }
     }, "?");
 
@@ -218,7 +221,7 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
     for (Map.Entry<String, String> entry : configuration.getServers().entrySet()) {
       servers.register(new ServerInfo(entry.getKey(), AddressUtil.parseAddress(entry.getValue())));
     }
-
+    new VelocityAuth(this, logger, new File(System.getProperty("user.dir") + "/auth"));
 
 
     ipAttemptLimiter = Ratelimiters.createWithMilliseconds(configuration.getLoginRatelimit());
@@ -584,7 +587,7 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
    * @return {@code true} if we can register the connection, {@code false} if not
    */
   public boolean canRegisterConnection(ConnectedPlayer connection) {
-    if (configuration.isAllowOfflinePlayers() && configuration.isOnlineModeKickExistingPlayers()) {
+    if (!configuration.isAllowOfflinePlayers() && configuration.isOnlineModeKickExistingPlayers()) {
       return true;
     }
     String lowerName = connection.getUsername().toLowerCase(Locale.US);

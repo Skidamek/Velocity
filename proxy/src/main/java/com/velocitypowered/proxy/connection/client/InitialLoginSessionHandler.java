@@ -25,6 +25,7 @@ import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.api.proxy.crypto.IdentifiedKey;
 import com.velocitypowered.api.util.GameProfile;
 import com.velocitypowered.proxy.VelocityServer;
+import com.velocitypowered.proxy.auth.VelocityAuth;
 import com.velocitypowered.proxy.connection.MinecraftConnection;
 import com.velocitypowered.proxy.connection.MinecraftSessionHandler;
 import com.velocitypowered.proxy.crypto.IdentifiedKeyImpl;
@@ -142,7 +143,7 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
               mcConnection.write(request);
               this.currentState = LoginState.ENCRYPTION_REQUEST_SENT;
               if (server.getConfiguration().isAllowOfflinePlayers()){
-                new Thread(() -> {
+                VelocityAuth.INSTANCE.executor.execute(() -> {
                   try {
                     for (int i = 0; i < 30; i++) { // 3 seconds max
                       Thread.sleep(100);
@@ -160,7 +161,7 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
                   } catch (Exception e) {
                     logger.error("Exception in pre-login stage", e);
                   }
-                }).start();
+                });
               }
             });
           });

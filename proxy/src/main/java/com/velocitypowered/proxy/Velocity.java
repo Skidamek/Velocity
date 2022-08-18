@@ -53,7 +53,7 @@ public class Velocity {
    * Main method that the JVM will call when {@code java -jar velocity.jar} is executed.
    * @param args the arguments to the proxy
    */
-  public static void main(String... args) {
+  public static void main(String... args) throws Exception {
     final ProxyOptions options = new ProxyOptions(args);
     if (options.isHelp()) {
       return;
