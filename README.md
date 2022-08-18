@@ -54,6 +54,9 @@ offline-mode players must.
   - Secured against password spamming attacks, by temp-banning those players (configurable).
   - Secured against SQL injection.
 
+- **Other changes**
+  - `help or ?` will display a list of all available velocity commands.
+
 ## Player commands
 
 #### /register _password_ _confirm-password_

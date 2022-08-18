@@ -167,21 +167,24 @@ public class VelocityAuth implements PluginContainer {
                 if(e.getPlayer().isOnlineMode()){ // Handle paid player
                     if(isRegistered(e.getPlayer().getUsername())){
                         String error = new AdminLoginCommand().execute(e.getPlayer().getUsername(), "", getPlayerIp(e.getPlayer()));
-                        if(error.contains("Invalid credentials")){
-                            // Means that this account has a password even though
-                            // this is not required (for paid players), which means
-                            // a cracked player was using this username before and created
-                            // the account. This paid player however has priority
-                            // thus the cracked player will lose access to this account.
-                            RegisteredUser registeredUser = getRegisteredUser(e.getPlayer());
-                            registeredUser.password = "";
-                            RegisteredUser.update(registeredUser);
-                            error = new AdminLoginCommand().execute(e.getPlayer().getUsername(), "", getPlayerIp(e.getPlayer()));
-                            if(error!=null) e.getPlayer().disconnect(Component.text(error));
-                        } else
-                            e.getPlayer().disconnect(Component.text(error));
+                        if(error != null){
+                            if(error.contains("Invalid credentials")){
+                                // Means that this account has a password even though
+                                // this is not required (for paid players), which means
+                                // a cracked player was using this username before and created
+                                // the account. This paid player however has priority
+                                // thus the cracked player will lose access to this account.
+                                RegisteredUser registeredUser = getRegisteredUser(e.getPlayer());
+                                registeredUser.password = "";
+                                RegisteredUser.update(registeredUser);
+                                error = new AdminLoginCommand().execute(e.getPlayer().getUsername(), "", getPlayerIp(e.getPlayer()));
+                                if(error!=null) e.getPlayer().disconnect(Component.text(error));
+                            } else
+                                e.getPlayer().disconnect(Component.text(error));
+                        }
+                        // Successfully logged in.
                     } else{ // Not registered yet
-                        String error = new AdminRegisterCommand().execute(e.getPlayer().getUsername(), "");
+                        String error = new AdminRegisterCommand().execute(e.getPlayer().getUsername(), "", true);
                         if(error!=null) e.getPlayer().disconnect(Component.text(error));
                         error = new AdminLoginCommand().execute(e.getPlayer().getUsername(), "", getPlayerIp(e.getPlayer()));
                         if(error!=null) e.getPlayer().disconnect(Component.text(error));
@@ -263,7 +266,7 @@ public class VelocityAuth implements PluginContainer {
                         Thread.sleep(1000);
                     }
 
-                    Session session = getValidSession(e.getPlayer());
+                    Session session = getActiveSession(e.getPlayer());
                     if (session != null) {
                         session.isActive = 1;
                         Session.update(session);
@@ -312,23 +315,23 @@ public class VelocityAuth implements PluginContainer {
     }
 
     public boolean hasValidSession(Player player) throws Exception {
-        return getValidSession(player) != null;
+        return getActiveSession(player) != null;
     }
 
-    public Session getValidSession(Player player) throws Exception {
-        return getValidSession(player.getUsername(), getPlayerIp(player));
+    public Session getActiveSession(Player player) throws Exception {
+        return getActiveSession(player.getUsername(), getPlayerIp(player));
     }
 
     public boolean hasValidSession(String username, String ipAddress) throws Exception {
-        return getValidSession(username, ipAddress) != null;
+        return getActiveSession(username, ipAddress) != null;
     }
 
     /**
      * Returns true, if this username/ip-address has no session, aka
      * the player never logged in, or another older session expired.
      */
-    public Session getValidSession(String username, String ipAddress) throws Exception {
-        List<Session> sessions = Session.get("username=? AND ipAddress=?", username, ipAddress);
+    public Session getActiveSession(String username, String ipAddress) throws Exception {
+        List<Session> sessions = Session.get("username=? AND ipAddress=? AND isActive=1", username, ipAddress);
         if (sessions.isEmpty()) {
             return null;
         }
