@@ -21,20 +21,20 @@ restore the players skins).
 ## Features
 This velocity fork makes it possible for you
 to enable offline mode and not fear about
-cracked players causing you trouble.
+offline-mode (cracked) players causing you trouble.
 
 Your server will be available to a much larger player-base,
 and you should see a fast increase in player count.
 
 Premium players will **not** have to register/login, only
-cracked players must.
+offline-mode players must.
 
 - **Basics**
   - SQL database **required** (normally pre-installed on your system).
   - Ban system, to block players from joining your proxy.
   - Whitelist mode to completely block not registered players from joining.
 
-- **Security against cracked players**
+- **Security against offline-mode players**
   - Register/Login **required** (session based authentication, players only need to login once).
   - Connections to other servers are blocked, if the player is not logged in, and  get automatically forwarded to the limbo auth-server (in spectator mode).
   - Blocks all proxy command execution for not logged in players (except the /register and /login commands)
@@ -42,11 +42,11 @@ cracked players must.
   - Prevents kicking of already connected players (via username spoofing).
   - Prevents join blocking (via username spoofing).
 
-- **Security for paid players**
+- **Security for online-mode players**
   - Register/Login **is not required**
-  - If a cracked player was playing on the server before
-  and had the same name as the current paid player that joined, the
-  cracked player loses access to the account.
+  - If a offline-mode player was playing on the server before
+  and had the same name as the current online-mode player that joined, the
+  offline-mode player loses access to the account.
 
 - **Registration/Login**
   - Only happens on a pre-configured, auto-installed and auto-started limbo auth-server.
