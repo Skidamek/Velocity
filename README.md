@@ -26,7 +26,7 @@ offline-mode (cracked) players causing you trouble.
 Your server will be available to a much larger player-base,
 and you should see a fast increase in player count.
 
-Premium players will **not** have to register/login, only
+Regular players will **not** have to register/login, only
 offline-mode players must.
 
 - **Basics**
