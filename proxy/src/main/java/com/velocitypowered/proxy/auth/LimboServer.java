@@ -61,7 +61,8 @@ public class LimboServer {
             }
             // Download limbo server jar
             try (ReadableByteChannel readableByteChannel = Channels.newChannel(new URL("" +
-                    "https://ci.loohpjames.com/job/Limbo/lastBuild/artifact/target/Limbo-0.6.18-ALPHA-1.19.2.jar")
+                    "https://ci.loohpjames.com/job/Limbo/18/artifact/target/Limbo-0.6.17-ALPHA-1.19.1.jar")
+                    //TODO update to 1.19.2 so that ViaVersion is not required anymore!
                     .openStream())) {
                 if (!jar.exists()) jar.createNewFile();
                 try (FileChannel c = new FileOutputStream(jar).getChannel()) {

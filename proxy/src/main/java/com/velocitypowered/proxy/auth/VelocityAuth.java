@@ -220,13 +220,13 @@ public class VelocityAuth implements PluginContainer {
                 // Remove all permissions of the user, if not logged in
                 // and restore them later, when logged in.
                 if (e.getSubject() instanceof Player) {
+                    Player player = (Player) e.getSubject();
 
                     // Make sure that all permission providers for players are mutable
                     MutablePermissionProvider permissionProvider =
-                            new MutablePermissionProvider(permission -> e.getSubject().hasPermission(permission));
+                            new MutablePermissionProvider(player::hasPermission);
                     e.setProvider(permissionProvider);
 
-                    Player player = (Player) e.getSubject();
                     if (!hasValidSession(player)) {
                         Predicate<String> oldPermissionFunction = permissionProvider.hasPermission;
                         permissionProvider.hasPermission = NoPermissionPlayer.tempPermissionFunction;

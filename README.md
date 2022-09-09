@@ -19,15 +19,15 @@ plugins on your proxy (to add support for more Minecraft versions and
 restore the players skins).
 
 ## Features
+Regular players will **not** have to register/login, only
+offline-mode players must.
+
 This velocity fork makes it possible for you
 to enable offline mode and not fear about
 offline-mode (cracked) players causing you trouble.
 
 Your server will be available to a much larger player-base,
 and you should see a fast increase in player count.
-
-Regular players will **not** have to register/login, only
-offline-mode players must.
 
 - **Basics**
   - SQL database **required** (normally pre-installed on your system).
