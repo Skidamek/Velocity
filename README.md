@@ -10,8 +10,9 @@ and flexibility.
 `player-info-forwarding-mode = "modern"`
 and `force-key-authentication = false`
 set, to work properly.
-4. Make sure all your minecraft servers have `online-mode=false` in their `server.properties`.
-5. Done! Start your velocity proxy (`java -jar velocity.jar` in command line or script).
+4. Download and put [ViaVersion](https://www.spigotmc.org/resources/viaversion.19254/) into your velocity plugins folder.
+5. Make sure all your minecraft servers have `online-mode=false` in their `server.properties`.
+6. Done! Start your velocity proxy from a terminal with `java -jar velocity.jar` or via a script.
 
 It's recommended to also install the [ViaVersion](https://www.spigotmc.org/resources/viaversion.19254/) 
 and [SkinsRestorer](https://www.spigotmc.org/resources/skinsrestorer.2124/)
@@ -23,10 +24,8 @@ Regular players will **not** have to register/login, only
 offline-mode players must.
 
 This velocity fork makes it possible for you
-to enable offline mode and not fear about
-offline-mode (cracked) players causing you trouble.
-
-Your server will be available to a much larger player-base,
+to disable online mode and not fear about
+offline-mode (cracked) players causing you trouble. Your server will be available to a much larger player-base,
 and you should see a fast increase in player count.
 
 - **Basics**
