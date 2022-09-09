@@ -24,7 +24,7 @@ Regular players will **not** have to register/login, only
 offline-mode players must.
 
 This velocity fork makes it possible for you
-to enable offline mode and not fear about
+to disable online mode and not fear about
 offline-mode (cracked) players causing you trouble. Your server will be available to a much larger player-base,
 and you should see a fast increase in player count.
 
