@@ -47,7 +47,7 @@ and you should see a fast increase in player count.
   offline-mode player loses access to the account.
 
 - **Registration/Login**
-  - Only happens on a pre-configured, auto-installed and auto-started limbo auth-server.
+  - Players get forwarded to a virtual limbo server for authentication.
   - Secured against password timing attacks.
   - Secured against password spamming attacks, by temp-banning those players (configurable).
   - Secured against SQL injection.
