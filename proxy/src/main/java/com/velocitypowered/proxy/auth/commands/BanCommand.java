@@ -63,7 +63,7 @@ public final class BanCommand implements Command {
     }
 
     @Override
-    public String command() {
+    public String name() {
         return "ban";
     }
 

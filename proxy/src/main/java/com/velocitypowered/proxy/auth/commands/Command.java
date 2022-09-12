@@ -20,11 +20,12 @@ package com.velocitypowered.proxy.auth.commands;
 
 
 import com.velocitypowered.api.command.CommandManager;
+import com.velocitypowered.api.command.CommandMeta;
 import com.velocitypowered.api.command.SimpleCommand;
 import com.velocitypowered.proxy.auth.VelocityAuth;
 
 public interface Command extends SimpleCommand {
-    String command();
+    String name();
 
     String[] aliases();
 
@@ -32,7 +33,7 @@ public interface Command extends SimpleCommand {
 
     default void register() {
         CommandManager commandManager = VelocityAuth.INSTANCE.proxy.getCommandManager();
-        commandManager.register(commandManager.metaBuilder(command()).aliases(aliases()).build(), this);
+        commandManager.register(meta(), this);
     }
 
     @Override
@@ -48,4 +49,9 @@ public interface Command extends SimpleCommand {
      * @throws Exception if something went really wrong.
      */
     String execute(Object... args) throws Exception;
+
+    default CommandMeta meta(){
+        CommandManager commandManager = VelocityAuth.INSTANCE.proxy.getCommandManager();
+        return commandManager.metaBuilder(name()).aliases(aliases()).build();
+    }
 }

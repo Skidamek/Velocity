@@ -32,15 +32,15 @@ public class MutablePermissionProvider implements PermissionProvider {
      * This permission function wraps around {@link #hasPermission}
      * and thus its logic is completely mutable.
      */
-    private final PermissionFunction permissionFunction = new PermissionFunction() {
-        @Override
-        public Tristate getPermissionValue(String permission) {
-            return hasPermission.test(permission) ? Tristate.TRUE : Tristate.FALSE;
-        }
-    };
+    private final PermissionFunction permissionFunction;
+
+    public MutablePermissionProvider(PermissionFunction permissionFunction) {
+        this.permissionFunction = permissionFunction;
+    }
 
     public MutablePermissionProvider(Predicate<String> hasPermission) {
         this.hasPermission = hasPermission;
+        this.permissionFunction = permission -> hasPermission.test(permission) ? Tristate.TRUE : Tristate.FALSE;
     }
 
     @Override

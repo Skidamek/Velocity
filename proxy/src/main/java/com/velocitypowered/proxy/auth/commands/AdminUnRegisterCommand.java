@@ -50,7 +50,7 @@ public final class AdminUnRegisterCommand implements Command {
     }
 
     @Override
-    public String command() {
+    public String name() {
         return "a_unregister";
     }
 

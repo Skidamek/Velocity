@@ -51,7 +51,7 @@ public final class AdminRegisterCommand implements Command {
     }
 
     @Override
-    public String command() {
+    public String name() {
         return "a_register";
     }
 

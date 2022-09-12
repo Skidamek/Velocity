@@ -54,7 +54,7 @@ public final class UnbanCommand implements Command {
     }
 
     @Override
-    public String command() {
+    public String name() {
         return "unban";
     }
 

@@ -58,7 +58,7 @@ public final class AdminLoginCommand implements Command {
     }
 
     @Override
-    public String command() {
+    public String name() {
         return "a_login";
     }
 

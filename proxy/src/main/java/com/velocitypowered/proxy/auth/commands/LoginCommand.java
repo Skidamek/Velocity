@@ -31,7 +31,7 @@ import java.util.Objects;
 
 public class LoginCommand implements Command {
     @Override
-    public String command() {
+    public String name() {
         return "login";
     }
 
@@ -104,10 +104,8 @@ public class LoginCommand implements Command {
 
                     // Forward user to first server
                     for (RegisteredServer s : VelocityAuth.INSTANCE.proxy.getAllServers()) {
-                        if (!Objects.equals(s.getServerInfo().getName(), VelocityAuth.INSTANCE.authServer.getServerInfo().getName())) {
-                            player.createConnectionRequest(s).fireAndForget();
-                            return;
-                        }
+                        player.createConnectionRequest(s).fireAndForget();
+                        return;
                     }
                     source.sendMessage(Component.text("Unable to forward to another server, because there aren't any.", TextColor.color(255, 0, 0)));
                 } catch (Exception e) {

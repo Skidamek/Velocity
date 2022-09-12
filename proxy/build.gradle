@@ -43,6 +43,7 @@ dependencies {
     // Note: we depend on the API twice, first the main sourceset, and then the annotation processor.
     implementation project(':velocity-api')
     implementation project(':velocity-api').sourceSets.ap.output
+    annotationProcessor(project(':velocity-api'))
     implementation project(':velocity-native')
 
     implementation "io.netty:netty-codec:${nettyVersion}"
@@ -89,8 +90,17 @@ dependencies {
     implementation "mysql:mysql-connector-java:8.0.24"
     implementation "org.springframework.security:spring-security-core:5.7.2"
     implementation "com.github.Osiris-Team:Dyml:9.4.2"
+    implementation("net.elytrium:elytrium-java-commons:1.0.5")
+    implementation("net.kyori:adventure-nbt:4.11.0")
+    compileOnly("com.github.spotbugs:spotbugs-annotations:4.7.0")
+    implementation("net.elytrium:fastprepare:1.0.2")
 
-    compileOnly 'com.github.spotbugs:spotbugs-annotations:4.4.0'
+    // Needs for some velocity methods.
+    compileOnly("io.netty:netty-codec:4.1.77.Final")
+    compileOnly("io.netty:netty-handler:4.1.77.Final")
+    compileOnly("it.unimi.dsi:fastutil-core:8.5.8")
+
+    implementation("org.bstats:bstats-velocity:3.0.0")
 
     testImplementation "org.junit.jupiter:junit-jupiter-api:${junitVersion}"
     testImplementation "org.junit.jupiter:junit-jupiter-engine:${junitVersion}"

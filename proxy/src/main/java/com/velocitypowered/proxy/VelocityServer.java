@@ -30,6 +30,7 @@ import com.velocitypowered.api.event.proxy.ProxyReloadEvent;
 import com.velocitypowered.api.event.proxy.ProxyShutdownEvent;
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.api.plugin.PluginContainer;
+import com.velocitypowered.api.plugin.PluginDescription;
 import com.velocitypowered.api.plugin.PluginManager;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
@@ -72,6 +73,7 @@ import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.EventLoopGroup;
+import net.elytrium.limboapi.LimboAPI;
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.audience.ForwardingAudience;
 import net.kyori.adventure.key.Key;
@@ -206,23 +208,37 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
     // Initialize commands first
     commandManager.register("velocity", new VelocityCommand(this));
     commandManager.register("server", new ServerCommand(this));
-    commandManager.register("shutdown", ShutdownCommand.command(this),
-        "end", "stop");
+    commandManager.register("shutdown", ShutdownCommand.command(this), "end", "stop");
     new GlistCommand(this).register();
     commandManager.register("help", (SimpleCommand) invocation -> {
-      logger.info("Currently registered velocity commands:");
-      for (CommandNode<CommandSource> child : commandManager.dispatcher.getRoot().getChildren()) {
+      Collection<CommandNode<CommandSource>> children = commandManager.dispatcher.getRoot().getChildren();
+      logger.info("Registered "+children.size()+" velocity commands:");
+      for (CommandNode<CommandSource> child : children) {
         logger.info(child.getName());
       }
     }, "?");
+    commandManager.register("plugins", (SimpleCommand) invocation -> {
+      Collection<PluginContainer> plugins = pluginManager.getPlugins();
+      logger.info("Loaded "+plugins.size()+" plugins:");
+      for (PluginContainer plugin : plugins) {
+        PluginDescription d = plugin.getDescription();
+        logger.info(d.getName().orElse("-")+" by "+d.getAuthors().get(0)+" ("+d.getId()+"/"+d.getVersion().orElse("-")+")");
+      }
+    }, "pl");
 
     this.doStartupConfigLoad();
 
     for (Map.Entry<String, String> entry : configuration.getServers().entrySet()) {
       servers.register(new ServerInfo(entry.getKey(), AddressUtil.parseAddress(entry.getValue())));
     }
-    new VelocityAuth(this, logger, new File(System.getProperty("user.dir") + "/auth"));
-
+    // Register internal plugins
+    pluginManager.registerPlugin(
+            new LimboAPI(org.slf4j.LoggerFactory.getLogger("limbo"),
+                    this,
+                    new File(System.getProperty("user.dir") + "/limbo").toPath()));
+    pluginManager.registerPlugin(new VelocityAuth(this,
+            org.slf4j.LoggerFactory.getLogger("auth"),
+            new File(System.getProperty("user.dir") + "/auth")));
 
     ipAttemptLimiter = Ratelimiters.createWithMilliseconds(configuration.getLoginRatelimit());
     loadPlugins();

@@ -57,7 +57,7 @@ public class VelocityPluginManager implements PluginManager {
     this.server = checkNotNull(server, "server");
   }
 
-  private void registerPlugin(PluginContainer plugin) {
+  public void registerPlugin(PluginContainer plugin) {
     pluginsById.put(plugin.getDescription().getId(), plugin);
     Optional<?> instance = plugin.getInstance();
     instance.ifPresent(o -> pluginInstances.put(o, plugin));

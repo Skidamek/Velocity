@@ -28,7 +28,7 @@ import java.util.Objects;
 
 public class RegisterCommand implements Command {
     @Override
-    public String command() {
+    public String name() {
         return "register";
     }
 

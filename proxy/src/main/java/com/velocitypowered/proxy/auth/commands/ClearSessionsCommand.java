@@ -27,7 +27,7 @@ import java.util.List;
 
 public class ClearSessionsCommand implements Command {
     @Override
-    public String command() {
+    public String name() {
         return "clear_sessions";
     }
 

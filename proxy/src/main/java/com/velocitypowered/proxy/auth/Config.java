@@ -33,7 +33,6 @@ public class Config extends Yaml {
     public YamlSection databasePassword;
     public YamlSection whitelistMode;
     public YamlSection sessionMaxHours;
-    public YamlSection debugAuthServerName;
     public YamlSection minFailedLoginsForBan;
     public YamlSection failedLoginBanTime;
     public YamlSection minPasswordLength;
@@ -74,8 +73,6 @@ public class Config extends Yaml {
         this.put("debug").setCountTopLineBreaks(1).setComments("Options useful for debugging stuff.",
                 "Could disappear in future releases without notice.",
                 "Changing any of this values not advised.");
-        debugAuthServerName = this.put("debug", "auth-server-name").setComments("When null, default pre-installed limbo server will",
-                "be started and used. Otherwise the provided server will be used as auth-server.");
         this.save();
     }
 }

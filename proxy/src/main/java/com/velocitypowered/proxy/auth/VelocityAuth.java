@@ -25,11 +25,11 @@ import com.velocitypowered.api.event.connection.PreLoginEvent;
 import com.velocitypowered.api.event.permission.PermissionsSetupEvent;
 import com.velocitypowered.api.event.player.ServerConnectedEvent;
 import com.velocitypowered.api.event.player.ServerPreConnectEvent;
+import com.velocitypowered.api.permission.PermissionProvider;
 import com.velocitypowered.api.plugin.PluginContainer;
 import com.velocitypowered.api.plugin.PluginDescription;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
-import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.auth.commands.*;
 import com.velocitypowered.proxy.auth.database.BannedUser;
@@ -39,14 +39,16 @@ import com.velocitypowered.proxy.auth.database.Session;
 import com.velocitypowered.proxy.auth.perms.MutablePermissionProvider;
 import com.velocitypowered.proxy.auth.perms.NoPermissionPlayer;
 import com.velocitypowered.proxy.auth.utils.UtilsTime;
+import net.elytrium.limboapi.LimboAPI;
+import net.elytrium.limboapi.api.chunk.Dimension;
+import net.elytrium.limboapi.api.player.GameMode;
+import net.elytrium.limboapi.server.LimboImpl;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextColor;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
 
 import java.io.File;
-import java.util.List;
-import java.util.Objects;
-import java.util.Scanner;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -64,10 +66,10 @@ public class VelocityAuth implements PluginContainer {
     public final Logger logger;
     public final File authDirectory;
     public boolean isWhitelistMode = false;
-    public LimboServer limboServer;
+    public LimboAPI limboAPI;
+    public LimboImpl limboServer;
     public int sessionMaxHours;
     public List<NoPermissionPlayer> noPermissionPlayers = new CopyOnWriteArrayList<>();
-    public RegisteredServer authServer;
     public int minFailedLoginsForBan;
     public int failedLoginBanTimeSeconds;
     public int minPasswordLength;
@@ -75,7 +77,37 @@ public class VelocityAuth implements PluginContainer {
 
     @Override
     public PluginDescription getDescription() {
-        return () -> "velocityauth";
+        return new PluginDescription() {
+            @Override
+            public String getId() {
+                return "auth";
+            }
+
+            @Override
+            public Optional<String> getName() {
+                return Optional.of("VelocityAuth");
+            }
+
+            @Override
+            public Optional<String> getVersion() {
+                return Optional.of("internal");
+            }
+
+            @Override
+            public Optional<String> getDescription() {
+                return Optional.of("Manages authentication of players.");
+            }
+
+            @Override
+            public List<String> getAuthors() {
+                return Collections.singletonList("Osiris-Team");
+            }
+        };
+    }
+
+    @Override
+    public Optional<?> getInstance() {
+        return Optional.of(this);
     }
 
     public VelocityAuth(VelocityServer proxy, Logger logger, File authDirectory) throws Exception {
@@ -122,17 +154,19 @@ public class VelocityAuth implements PluginContainer {
         logger.info("Loaded configuration. " + (System.currentTimeMillis() - now) + "ms");
         now = System.currentTimeMillis();
 
-        if (config.debugAuthServerName.asString() != null) {
-            authServer = proxy.getServer(config.debugAuthServerName.asString()).get();
-            logger.info("Using alternative/custom auth-server (" + authServer.getServerInfo().getAddress().toString() +
-                    "). " + (System.currentTimeMillis() - now) + "ms");
-        } else {
-            limboServer = new LimboServer();
-            limboServer.start();
-            authServer = limboServer.registeredServer;
-            logger.info("Started limbo auth-server (localhost:" + limboServer.port + "/running:" + limboServer.process.isAlive() + "). "
-                    + (System.currentTimeMillis() - now) + "ms");
-        }
+        limboAPI = (LimboAPI) proxy.getPluginManager().getPlugin("limbo").get().getInstance().get();
+        limboServer = (LimboImpl) limboAPI.createLimbo(limboAPI.createVirtualWorld(Dimension.THE_END, 0, 0, 0, 0, 0));
+        limboServer.setName("auth");
+        limboServer.setGameMode(GameMode.SPECTATOR);
+        LoginCommand loginCommand = new LoginCommand();
+        limboServer.registerCommand(loginCommand.meta(), loginCommand);
+        RegisterCommand registerCommand = new RegisterCommand();
+        limboServer.registerCommand(registerCommand.meta(), registerCommand);
+        // Note that registered commands kinda don't get executed by the limbo
+        // without having the AuthSessionHandler/MySessionHandler for the player when sending to the limbo.
+
+        logger.info("Started virtual limbo auth-server. "
+                + (System.currentTimeMillis() - now) + "ms");
         now = System.currentTimeMillis();
 
         Database.create();
@@ -202,10 +236,11 @@ public class VelocityAuth implements PluginContainer {
                 // at the same time and thus is perfect for safe authentication
                 // on offline (as well as online) servers.
                 if (!hasValidSession(e.getPlayer())) {
-                    e.setResult(ServerPreConnectEvent.ServerResult.allowed(authServer));
+                    //e.setResult(ServerPreConnectEvent.ServerResult.allowed(limboServer));
+                    e.setResult(ServerPreConnectEvent.ServerResult.denied());
+                    limboServer.spawnPlayer(e.getPlayer(), new AuthSessionHandler());
                     logger.info("Blocked connect to '" + e.getOriginalServer().getServerInfo().getName()
-                            + "' and forwarded " + e.getPlayer().getUsername() + " to '" +
-                            authServer.getServerInfo().getName() + "'. Player not logged in.");
+                            + "' and forwarded " + e.getPlayer().getUsername() + " to authentication. Player not logged in.");
                     return;
                 }
             } catch (Exception ex) {
@@ -223,16 +258,17 @@ public class VelocityAuth implements PluginContainer {
                     Player player = (Player) e.getSubject();
 
                     // Make sure that all permission providers for players are mutable
-                    MutablePermissionProvider permissionProvider =
-                            new MutablePermissionProvider(player::hasPermission);
-                    e.setProvider(permissionProvider);
+                    PermissionProvider oldProvider = e.getProvider();
+                    MutablePermissionProvider newProvider =
+                            new MutablePermissionProvider(oldProvider.createFunction(e.getSubject()));
+                    e.setProvider(newProvider);
 
                     if (!hasValidSession(player)) {
-                        Predicate<String> oldPermissionFunction = permissionProvider.hasPermission;
-                        permissionProvider.hasPermission = NoPermissionPlayer.tempPermissionFunction;
+                        Predicate<String> oldPermissionFunction = newProvider.hasPermission;
+                        newProvider.hasPermission = NoPermissionPlayer.tempPermissionFunction;
                         noPermissionPlayers.add(new NoPermissionPlayer(
                                 player,
-                                permissionProvider,
+                                newProvider,
                                 oldPermissionFunction));
                     }
                 }
@@ -242,40 +278,7 @@ public class VelocityAuth implements PluginContainer {
             }
         });
         proxy.getEventManager().register(this, ServerConnectedEvent.class, PostOrder.FIRST, e -> {
-            executor.execute(() -> {
-                try {
-                    int maxSeconds = 60;
-                    for (int i = maxSeconds; i >= 0; i--) {
-                        if (!e.getPlayer().isActive() || isRegistered(e.getPlayer().getUsername())) break;
-                        e.getPlayer().sendActionBar(Component.text(i + " seconds remaining to: /register <password> <confirm-password>",
-                                TextColor.color(184, 25, 43)));
-                        if (i == 0) {
-                            e.getPlayer().disconnect(Component.text("Please register within " + maxSeconds + " seconds after joining the server.",
-                                    TextColor.color(184, 25, 43)));
-                        }
-                        Thread.sleep(1000);
-                    }
-                    for (int i = maxSeconds; i >= 0; i--) {
-                        if (!e.getPlayer().isActive() || hasValidSession(e.getPlayer()))
-                            break;
-                        e.getPlayer().sendActionBar(Component.text(i + " seconds remaining to: /login <password>", TextColor.color(184, 25, 43)));
-                        if (i == 0) {
-                            e.getPlayer().disconnect(Component.text("Please login within " + maxSeconds + " seconds after joining the server.",
-                                    TextColor.color(184, 25, 43)));
-                        }
-                        Thread.sleep(1000);
-                    }
-
-                    Session session = getActiveSession(e.getPlayer());
-                    if (session != null) {
-                        session.isActive = 1;
-                        Session.update(session);
-                    }
-                } catch (InterruptedException ignored) {
-                } catch (Exception exception) {
-                    exception.printStackTrace();
-                }
-            });
+            onServerConnect(e.getPlayer());
         });
         proxy.getEventManager().register(this, DisconnectEvent.class, PostOrder.LAST, e -> {
             try {
@@ -298,8 +301,8 @@ public class VelocityAuth implements PluginContainer {
         new AdminRegisterCommand().register();
         new AdminUnRegisterCommand().register();
         new AdminLoginCommand().register();
-        new RegisterCommand().register();
-        new LoginCommand().register();
+        //new RegisterCommand().register(); // Only available in virtual limbo auth server
+        //new LoginCommand().register(); // Only available in virtual limbo auth server
         new BanCommand().register();
         new UnbanCommand().register();
         new ListSessionsCommand().register();
@@ -360,5 +363,42 @@ public class VelocityAuth implements PluginContainer {
 
     private RegisteredUser getRegisteredUser(Player player) throws Exception {
         return RegisteredUser.get("username=?", player.getUsername()).get(0);
+    }
+
+    public void onServerConnect(Player player) {
+        VelocityAuth.INSTANCE.executor.execute(() -> {
+            try {
+                int maxSeconds = 60;
+                for (int i = maxSeconds; i >= 0; i--) {
+                    if (!player.isActive() || VelocityAuth.INSTANCE.isRegistered(player.getUsername())) break;
+                    player.sendActionBar(Component.text(i + " seconds remaining to: /register <password> <confirm-password>",
+                            TextColor.color(184, 25, 43)));
+                    if (i == 0) {
+                        player.disconnect(Component.text("Please register within " + maxSeconds + " seconds after joining the server.",
+                                TextColor.color(184, 25, 43)));
+                    }
+                    Thread.sleep(1000);
+                }
+                for (int i = maxSeconds; i >= 0; i--) {
+                    if (!player.isActive() || VelocityAuth.INSTANCE.hasValidSession(player))
+                        break;
+                    player.sendActionBar(Component.text(i + " seconds remaining to: /login <password>", TextColor.color(184, 25, 43)));
+                    if (i == 0) {
+                        player.disconnect(Component.text("Please login within " + maxSeconds + " seconds after joining the server.",
+                                TextColor.color(184, 25, 43)));
+                    }
+                    Thread.sleep(1000);
+                }
+
+                Session session = VelocityAuth.INSTANCE.getActiveSession(player);
+                if (session != null) {
+                    session.isActive = 1;
+                    Session.update(session);
+                }
+            } catch (InterruptedException ignored) {
+            } catch (Exception exception) {
+                exception.printStackTrace();
+            }
+        });
     }
 }

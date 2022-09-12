@@ -6,7 +6,7 @@ plugins {
 
 allprojects {
     group 'com.velocitypowered'
-    version '3.1.2-SNAPSHOT'
+    version '1.1 with velocity 3.1.2-SNAPSHOT'
 
     ext {
         // dependency versions
@@ -50,7 +50,14 @@ allprojects {
             url "https://nexus.velocitypowered.com/repository/maven-public/"
         }
 
-        maven { url 'https://jitpack.io' }
+        maven {
+            url 'https://jitpack.io'
+        }
+
+        maven {
+            setName("elytrium-repo")
+            url 'https://maven.elytrium.net/repo/'
+        }
     }
 
     test {

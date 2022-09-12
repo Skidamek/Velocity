@@ -25,7 +25,7 @@ import net.kyori.adventure.text.format.TextColor;
 
 public class ListSessionsCommand implements Command {
     @Override
-    public String command() {
+    public String name() {
         return "list_sessions";
     }
 
