@@ -212,14 +212,14 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
     new GlistCommand(this).register();
     commandManager.register("help", (SimpleCommand) invocation -> {
       Collection<CommandNode<CommandSource>> children = commandManager.dispatcher.getRoot().getChildren();
-      logger.info("Registered "+children.size()+" velocity commands:");
+      logger.info("Showing "+children.size()+" registered velocity commands:");
       for (CommandNode<CommandSource> child : children) {
         logger.info(child.getName());
       }
     }, "?");
     commandManager.register("plugins", (SimpleCommand) invocation -> {
       Collection<PluginContainer> plugins = pluginManager.getPlugins();
-      logger.info("Loaded "+plugins.size()+" plugins:");
+      logger.info("Showing "+plugins.size()+" loaded velocity plugins:");
       for (PluginContainer plugin : plugins) {
         PluginDescription d = plugin.getDescription();
         logger.info(d.getName().orElse("-")+" by "+d.getAuthors().get(0)+" ("+d.getId()+"/"+d.getVersion().orElse("-")+")");

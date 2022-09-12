@@ -69,6 +69,14 @@ public interface ProxyConfig {
   boolean isAllowOfflinePlayers();
 
   /**
+   * Always returns true, since this option is now irrelevant
+   * due to VelocityAuth allowing online and offline players to join.
+   */
+  default boolean isOnlineMode(){
+    return true;
+  }
+
+  /**
    * If client's ISP/AS sent from this proxy is different from the one from Mojang's
    * authentication server, the player is kicked. This disallows some VPN and proxy
    * connections but is a weak form of protection.
