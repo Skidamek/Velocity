@@ -6,17 +6,14 @@ and flexibility.
 ## Usage
 1. Download the velocity jar from the latest release [here](https://github.com/Osiris-Team/Velocity/releases).
 2. Stop your proxy and replace the old velocity jar with the new/downloaded one.
-3. Make sure your velocity config has
-`player-info-forwarding-mode = "modern"`
-and `force-key-authentication = false`
-set, to work properly.
-4. Make sure all your minecraft servers have `online-mode=false` in their `server.properties`.
-5. Done! Start your velocity proxy from a terminal with `java -jar velocity.jar` or via a script.
+3. Make sure all your minecraft servers have `online-mode=false` in their `server.properties`.
+4. Done! Start your velocity proxy from a terminal with `java -jar velocity.jar` or via a script.
 
 It's recommended to also install the [ViaVersion](https://www.spigotmc.org/resources/viaversion.19254/) 
 and [SkinsRestorer](https://www.spigotmc.org/resources/skinsrestorer.2124/)
 plugins on your proxy (to add support for more Minecraft versions and 
-restore the players skins).
+restore the players skins). Also don't forget to secure your Minecraft servers via a firewall and/or
+by using Velocitys' modern-forwarding, read more [here](https://velocitypowered.com/wiki/deployment/security/).
 
 ## Features
 Regular players will **not** have to register/login, only
