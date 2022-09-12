@@ -10,9 +10,8 @@ and flexibility.
 `player-info-forwarding-mode = "modern"`
 and `force-key-authentication = false`
 set, to work properly.
-4. Download and put [ViaVersion](https://www.spigotmc.org/resources/viaversion.19254/) into your velocity plugins folder.
-5. Make sure all your minecraft servers have `online-mode=false` in their `server.properties`.
-6. Done! Start your velocity proxy from a terminal with `java -jar velocity.jar` or via a script.
+4. Make sure all your minecraft servers have `online-mode=false` in their `server.properties`.
+5. Done! Start your velocity proxy from a terminal with `java -jar velocity.jar` or via a script.
 
 It's recommended to also install the [ViaVersion](https://www.spigotmc.org/resources/viaversion.19254/) 
 and [SkinsRestorer](https://www.spigotmc.org/resources/skinsrestorer.2124/)
@@ -55,6 +54,7 @@ and you should see a fast increase in player count.
 
 - **Other changes**
   - `help or ?` will display a list of all available velocity commands.
+  - `plugins or pl` will display a list of all installed velocity plugins.
 
 ## Player commands
 
