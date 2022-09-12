@@ -13,7 +13,7 @@ It's recommended to also install the [ViaVersion](https://www.spigotmc.org/resou
 and [SkinsRestorer](https://www.spigotmc.org/resources/skinsrestorer.2124/)
 plugins on your proxy (to add support for more Minecraft versions and 
 restore the players skins). Also don't forget to secure your Minecraft servers via a firewall and/or
-by using velocitys' modern-forwaring, read more [here](https://velocitypowered.com/wiki/deployment/security/).
+by using Velocitys' modern-forwarding, read more [here](https://velocitypowered.com/wiki/deployment/security/).
 
 ## Features
 Regular players will **not** have to register/login, only
