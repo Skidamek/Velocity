@@ -603,7 +603,7 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
    * @return {@code true} if we can register the connection, {@code false} if not
    */
   public boolean canRegisterConnection(ConnectedPlayer connection) {
-    if (!configuration.isAllowOfflinePlayers() && configuration.isOnlineModeKickExistingPlayers()) {
+    if (configuration.isOnlineMode() && configuration.isOnlineModeKickExistingPlayers()) {
       return true;
     }
     String lowerName = connection.getUsername().toLowerCase(Locale.US);

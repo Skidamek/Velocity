@@ -14,9 +14,10 @@ show-max-players = 500
 
 # By default players get authenticated via Mojang and are allowed to join.
 # If the authentication fails however the player is sent to the limbo-auth server
-# and required to register to be able to play. You can disable this
-# and only allow players that actually bought the game to join.
-allow-offline-players = true
+# and required to register to be able to play.
+# By setting this to 'true', offline-mode players will not be able to join and
+# only regular/online-mode players can play on the server.
+online-mode = false
 
 # Should the proxy enforce the new public key security standard? By default, this is on.
 force-key-authentication = true

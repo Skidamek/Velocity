@@ -55,7 +55,7 @@ public class VelocityConfiguration implements ProxyConfig {
   @Expose private String bind = "0.0.0.0:25577";
   @Expose private String motd = "&3A Velocity Server";
   @Expose private int showMaxPlayers = 500;
-  @Expose private boolean allowOfflinePlayers = true;
+  @Expose private boolean onlineMode = true;
   @Expose private boolean preventClientProxyConnections = false;
   @Expose private PlayerInfoForwarding playerInfoForwardingMode = PlayerInfoForwarding.NONE;
   private byte[] forwardingSecret = generateRandomString(12).getBytes(StandardCharsets.UTF_8);
@@ -81,7 +81,7 @@ public class VelocityConfiguration implements ProxyConfig {
     this.metrics = metrics;
   }
 
-  private VelocityConfiguration(String bind, String motd, int showMaxPlayers, boolean allowOfflinePlayers,
+  private VelocityConfiguration(String bind, String motd, int showMaxPlayers, boolean onlineMode,
       boolean preventClientProxyConnections, boolean announceForge,
       PlayerInfoForwarding playerInfoForwardingMode, byte[] forwardingSecret,
       boolean onlineModeKickExistingPlayers, PingPassthroughMode pingPassthrough,
@@ -90,7 +90,7 @@ public class VelocityConfiguration implements ProxyConfig {
     this.bind = bind;
     this.motd = motd;
     this.showMaxPlayers = showMaxPlayers;
-    this.allowOfflinePlayers = allowOfflinePlayers;
+    this.onlineMode = onlineMode;
     this.preventClientProxyConnections = preventClientProxyConnections;
     this.announceForge = announceForge;
     this.playerInfoForwardingMode = playerInfoForwardingMode;
@@ -262,8 +262,8 @@ public class VelocityConfiguration implements ProxyConfig {
   }
 
   @Override
-  public boolean isAllowOfflinePlayers() {
-    return allowOfflinePlayers;
+  public boolean isOnlineMode() {
+    return onlineMode;
   }
 
   @Override
@@ -383,7 +383,7 @@ public class VelocityConfiguration implements ProxyConfig {
         .add("bind", bind)
         .add("motd", motd)
         .add("showMaxPlayers", showMaxPlayers)
-        .add("allow-offline-players", allowOfflinePlayers)
+        .add("online-mode", onlineMode)
         .add("playerInfoForwardingMode", playerInfoForwardingMode)
         .add("forwardingSecret", forwardingSecret)
         .add("announceForge", announceForge)

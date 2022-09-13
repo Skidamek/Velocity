@@ -57,14 +57,7 @@ public class PlayerListItemHook extends PlayerListItem {
           ConnectedPlayer player = ((VelocityServerConnection) SERVER_CONN_FIELD.get(handler)).getPlayer();
           UUID initialID = this.plugin.getInitialID(player);
 
-          if (player.getUniqueId().equals(item.getUuid())) {
-            items.set(i, new Item(initialID)
-                .setDisplayName(item.getDisplayName())
-                .setGameMode(item.getGameMode())
-                .setLatency(item.getLatency())
-                .setName(item.getName())
-                .setProperties(item.getProperties()));
-          }
+          //TODO: https://github.com/Elytrium/LimboAPI/issues/66
         }
       } catch (IllegalAccessException e) {
         e.printStackTrace();

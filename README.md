@@ -6,7 +6,8 @@ and flexibility.
 ## Usage
 1. Download the velocity jar from the latest release [here](https://github.com/Osiris-Team/Velocity/releases).
 2. Stop your proxy and replace the old velocity jar with the new/downloaded one.
-3. Make sure all your minecraft servers have `online-mode=false` in their `server.properties`.
+3. Make sure all your minecraft servers have `online-mode=false` in their `server.properties`
+   (also set it in `velocity.toml`).
 4. Done! Start your velocity proxy from a terminal with `java -jar velocity.jar` or via a script.
 
 It's recommended to also install the [ViaVersion](https://www.spigotmc.org/resources/viaversion.19254/) 

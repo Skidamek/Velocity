@@ -191,12 +191,14 @@ public class VelocityAuth implements PluginContainer {
         });
         proxy.getEventManager().register(this, LoginEvent.class, PostOrder.FIRST, e -> {
             try {
+                logger.info(e.toString());
                 if (BannedUser.isBanned(getPlayerIp(e.getPlayer()), e.getPlayer().getUniqueId().toString())) {
                     BannedUser bannedUser = BannedUser.getBanned(getPlayerIp(e.getPlayer()), e.getPlayer().getUniqueId().toString());
                     Component message = new BanCommand().getBanText(bannedUser.timestampExpires, bannedUser.reason);
                     e.getPlayer().disconnect(message);
                     logger.info("Blocked connection for " + e.getPlayer().getUsername() + "/" + e.getPlayer().getUniqueId().toString()
                             + ". Player is banned for " + new UtilsTime().getFormattedString(bannedUser.timestampExpires) + ".");
+                    return;
                 }
                 if(e.getPlayer().isOnlineMode()){ // Handle paid player
                     if(isRegistered(e.getPlayer().getUsername())){
@@ -238,7 +240,7 @@ public class VelocityAuth implements PluginContainer {
                 if (!hasValidSession(e.getPlayer())) {
                     //e.setResult(ServerPreConnectEvent.ServerResult.allowed(limboServer));
                     e.setResult(ServerPreConnectEvent.ServerResult.denied());
-                    limboServer.spawnPlayer(e.getPlayer(), new AuthSessionHandler());
+                    limboServer.spawnPlayer(e.getPlayer(), new LimboAuthSessionHandler());
                     logger.info("Blocked connect to '" + e.getOriginalServer().getServerInfo().getName()
                             + "' and forwarded " + e.getPlayer().getUsername() + " to authentication. Player not logged in.");
                     return;

@@ -61,7 +61,7 @@ public class AuthSessionHandler implements MinecraftSessionHandler {
   private final LoginInboundConnection inbound;
   private GameProfile profile;
   private @MonotonicNonNull ConnectedPlayer connectedPlayer;
-  private final boolean onlineMode;
+  public final boolean onlineMode;
 
   AuthSessionHandler(VelocityServer server, LoginInboundConnection inbound,
                      GameProfile profile, boolean onlineMode) {

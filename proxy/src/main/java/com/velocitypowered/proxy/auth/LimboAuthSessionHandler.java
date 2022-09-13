@@ -23,7 +23,7 @@ import net.elytrium.limboapi.MySessionHandler;
 import net.elytrium.limboapi.api.Limbo;
 import net.elytrium.limboapi.api.player.LimboPlayer;
 
-public class AuthSessionHandler extends MySessionHandler {
+public class LimboAuthSessionHandler extends MySessionHandler {
     @Override
     public void onSpawn(Limbo server, LimboPlayer player) {
         super.onSpawn(server, player);
