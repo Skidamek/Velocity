@@ -89,13 +89,10 @@ dependencies {
     implementation "net.lingala.zip4j:zip4j:2.11.1"
     implementation "mysql:mysql-connector-java:8.0.24"
     implementation "org.springframework.security:spring-security-core:5.7.2"
-    implementation "com.github.Osiris-Team:Dyml:9.5.9"
-
-    // LimboAPI:
-    implementation("net.elytrium:elytrium-java-commons:1.0.5")
-    implementation("net.kyori:adventure-nbt:4.11.0")
     compileOnly("com.github.spotbugs:spotbugs-annotations:4.7.0")
-    implementation("net.elytrium:fastprepare:1.0.2")
+
+    // My dependencies:
+    implementation "com.github.Osiris-Team:Dyml:9.5.9"
 
     // NanoLimbo:
     implementation 'org.spongepowered:configurate-yaml:4.1.2'

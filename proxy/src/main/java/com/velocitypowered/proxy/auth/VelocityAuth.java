@@ -37,8 +37,6 @@ import com.velocitypowered.proxy.auth.database.Session;
 import com.velocitypowered.proxy.auth.perms.NoPermissionPlayer;
 import com.velocitypowered.proxy.auth.utils.UtilsTime;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
-import net.elytrium.limboapi.LimboAPI;
-import net.elytrium.limboapi.server.LimboImpl;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextColor;
 import org.slf4j.Logger;
@@ -61,8 +59,6 @@ public class VelocityAuth implements PluginContainer {
     public final Logger logger;
     public final File authDirectory;
     public boolean isWhitelistMode = false;
-    public LimboAPI limboAPI;
-    public LimboImpl limboServer;
     public int sessionMaxHours;
     public List<NoPermissionPlayer> noPermissionPlayers = new CopyOnWriteArrayList<>();
     public int minFailedLoginsForBan;

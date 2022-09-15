@@ -54,10 +54,6 @@ allprojects {
             url 'https://jitpack.io'
         }
 
-        maven {
-            setName("elytrium-repo")
-            url 'https://maven.elytrium.net/repo/'
-        }
     }
 
     test {
