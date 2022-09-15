@@ -53,6 +53,8 @@ and you should see a fast increase in player count.
 - **Other changes**
   - `help or ?` will display a list of all available velocity commands.
   - `plugins or pl` will display a list of all installed velocity plugins.
+  - `servers` will display a list of all registered Minecraft servers.
+  - `player <name>` will display details about the connected player.
 
 ## Player commands
 

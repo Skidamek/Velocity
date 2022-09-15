@@ -41,8 +41,8 @@ import java.util.concurrent.locks.Lock;
  */
 public final class CommandGraphInjector<S> {
 
-  private static final StringRange ALIAS_RANGE = StringRange.at(0);
-  private static final StringReader ALIAS_READER = new StringReader("");
+  public static final StringRange ALIAS_RANGE = StringRange.at(0);
+  public static final StringReader ALIAS_READER = new StringReader("");
 
   private final @GuardedBy("lock") CommandDispatcher<S> dispatcher;
   private final Lock lock;

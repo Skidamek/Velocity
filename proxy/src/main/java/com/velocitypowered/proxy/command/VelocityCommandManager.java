@@ -54,7 +54,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class VelocityCommandManager implements CommandManager {
 
   public final @GuardedBy("lock") CommandDispatcher<CommandSource> dispatcher;
-  private final ReadWriteLock lock;
+  public final ReadWriteLock lock;
 
   private final VelocityEventManager eventManager;
   private final List<CommandRegistrar<?>> registrars;
@@ -101,6 +101,11 @@ public class VelocityCommandManager implements CommandManager {
   public void register(final BrigadierCommand command) {
     Preconditions.checkNotNull(command, "command");
     register(metaBuilder(command).build(), command);
+  }
+
+  public void register(final com.velocitypowered.proxy.auth.commands.Command command) {
+    Preconditions.checkNotNull(command, "command");
+    register(command.meta(this), command);
   }
 
   @Override

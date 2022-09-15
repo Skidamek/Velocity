@@ -18,12 +18,13 @@
 
 package com.velocitypowered.proxy.auth.perms;
 
+import com.velocitypowered.api.permission.PermissionFunction;
+import com.velocitypowered.api.permission.Tristate;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.proxy.auth.commands.LoginCommand;
 import com.velocitypowered.proxy.auth.commands.RegisterCommand;
 
 import java.util.Objects;
-import java.util.function.Predicate;
 
 public class NoPermissionPlayer {
     public static final String registerPermission = new RegisterCommand().permission();
@@ -32,23 +33,26 @@ public class NoPermissionPlayer {
      * Temporary permission function that gets set if the player is not logged in.
      * Only allows /register and /login commands of VelocityAuth to be executed.
      */
-    public static final Predicate<String> tempPermissionFunction =
-            permission -> Objects.equals(registerPermission, permission) ||
-                    Objects.equals(loginPermission, permission);
+    public static final PermissionFunction tempPermissionFunction =
+            permission -> {
+                boolean result = Objects.equals(registerPermission, permission) ||
+                        Objects.equals(loginPermission, permission);
+                return (result ? Tristate.TRUE : Tristate.FALSE);
+            };
     /**
      * Player that has blocked permissions.
      */
     public Player player;
-    public MutablePermissionProvider permissionProvider;
+    public PermissionFunction permissionFunction;
     /**
      * Old permission function that is used,
      * to restore permissions after a successful login.
      */
-    public Predicate<String> oldPermissionFunction;
+    public PermissionFunction oldPermissionFunction;
 
-    public NoPermissionPlayer(Player player, MutablePermissionProvider permissionProvider, Predicate<String> oldPermissionFunction) {
+    public NoPermissionPlayer(Player player, PermissionFunction permissionFunction, PermissionFunction oldPermissionFunction) {
         this.player = player;
-        this.permissionProvider = permissionProvider;
+        this.permissionFunction = permissionFunction;
         this.oldPermissionFunction = oldPermissionFunction;
     }
 }

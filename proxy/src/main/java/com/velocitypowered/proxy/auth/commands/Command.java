@@ -21,15 +21,42 @@ package com.velocitypowered.proxy.auth.commands;
 
 import com.velocitypowered.api.command.CommandManager;
 import com.velocitypowered.api.command.CommandMeta;
+import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.command.SimpleCommand;
 import com.velocitypowered.proxy.auth.VelocityAuth;
 
+import java.util.function.Consumer;
+
 public interface Command extends SimpleCommand {
+
     String name();
 
     String[] aliases();
 
     String permission();
+
+    /**
+     * This is the function that gets executed by the velocity API. <br>
+     * If you would like to separate your actual command logic from a specific
+     * API (in this case the velocity API) override the {@link #execute(Object...)} function,
+     * and call it inside this function.
+     *
+     * @param invocation the invocation context
+     */
+    @Override
+    void execute(Invocation invocation);
+
+    /**
+     * Code to execute on command execution. <br>
+     * Not bound to velocity API and thus usable everywhere. <br>
+     *
+     * @param args arguments.
+     * @return error message, null if no error.
+     * @throws Exception if something went really wrong.
+     */
+    default String execute(Object... args) throws Exception {
+        return null;
+    }
 
     default void register() {
         CommandManager commandManager = VelocityAuth.INSTANCE.proxy.getCommandManager();
@@ -38,20 +65,66 @@ public interface Command extends SimpleCommand {
 
     @Override
     default boolean hasPermission(Invocation invocation) {
-        return invocation.source().hasPermission(permission());
+        return invocation.source() // Get the person executing this command (player or console for example)
+                .hasPermission(permission());
     }
 
-    /**
-     * Actual execution code in here (independent from velocity api).
-     *
-     * @param args arguments.
-     * @return error message, null if no error.
-     * @throws Exception if something went really wrong.
-     */
-    String execute(Object... args) throws Exception;
+    default boolean hasPermission(CommandSource source) {
+        return source // The person executing this command (player or console for example)
+                .hasPermission(permission()); // Use that persons' permission function for hasPermission check
+    }
 
-    default CommandMeta meta(){
+    default CommandMeta meta() {
         CommandManager commandManager = VelocityAuth.INSTANCE.proxy.getCommandManager();
+        return meta(commandManager);
+    }
+
+    default CommandMeta meta(CommandManager commandManager) {
         return commandManager.metaBuilder(name()).aliases(aliases()).build();
+    }
+
+    class Builder {
+        public String name;
+        public String[] aliases;
+        public String permission;
+        public Consumer<Invocation> execute;
+
+        public Builder(String name, String[] aliases, String permission, Consumer<Invocation> execute) {
+            this.name = name;
+            this.aliases = aliases;
+            this.permission = permission;
+            this.execute = execute;
+        }
+
+        public Builder(String name, String permission, Consumer<Invocation> execute, String... aliases) {
+            this.name = name;
+            this.aliases = aliases;
+            this.permission = permission;
+            this.execute = execute;
+        }
+
+        public Command build() {
+            return new Command() {
+                @Override
+                public String name() {
+                    return name;
+                }
+
+                @Override
+                public String[] aliases() {
+                    return aliases;
+                }
+
+                @Override
+                public String permission() {
+                    return permission;
+                }
+
+                @Override
+                public void execute(Invocation invocation) {
+                    execute.accept(invocation);
+                }
+            };
+        }
     }
 }

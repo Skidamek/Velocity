@@ -17,94 +17,122 @@
  */
 
 package com.velocitypowered.proxy.auth.database;
-import java.util.List;
+
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.Statement;
 import java.util.ArrayList;
-import java.sql.*;
+import java.util.List;
 
 /**
- Generated class by <a href="https://github.com/Osiris-Team/jSQL-Gen">jSQL-Gen</a>
- that contains static methods for fetching/updating data from the "FailedLogin" table.
- A single object/instance of this class represents a single row in the table
- and data can be accessed via its public fields. <p>
- Its not recommended to modify this class but it should be OK to add new methods to it.
- If modifications are really needed create a pull request directly to jSQL-Gen instead.
+ * Generated class by <a href="https://github.com/Osiris-Team/jSQL-Gen">jSQL-Gen</a>
+ * that contains static methods for fetching/updating data from the "FailedLogin" table.
+ * A single object/instance of this class represents a single row in the table
+ * and data can be accessed via its public fields. <p>
+ * Its not recommended to modify this class but it should be OK to add new methods to it.
+ * If modifications are really needed create a pull request directly to jSQL-Gen instead.
  */
-public class FailedLogin{
-    private static java.sql.Connection con;
-    private static java.util.concurrent.atomic.AtomicInteger idCounter = new java.util.concurrent.atomic.AtomicInteger(0);
+public class FailedLogin {
+    private static final java.sql.Connection con;
+    private static final java.util.concurrent.atomic.AtomicInteger idCounter = new java.util.concurrent.atomic.AtomicInteger(0);
+
     static {
-        try{
+        try {
             con = java.sql.DriverManager.getConnection(Database.url, Database.username, Database.password);
             try (Statement s = con.createStatement()) {
                 s.executeUpdate("CREATE TABLE IF NOT EXISTS `FailedLogin` (`id` INT NOT NULL PRIMARY KEY)");
-                try{s.executeUpdate("ALTER TABLE `FailedLogin` ADD COLUMN `username` TEXT NOT NULL");}catch(Exception ignored){}
+                try {
+                    s.executeUpdate("ALTER TABLE `FailedLogin` ADD COLUMN `username` TEXT NOT NULL");
+                } catch (Exception ignored) {
+                }
                 s.executeUpdate("ALTER TABLE `FailedLogin` MODIFY COLUMN `username` TEXT NOT NULL");
-                try{s.executeUpdate("ALTER TABLE `FailedLogin` ADD COLUMN `ipAddress` TEXT NOT NULL");}catch(Exception ignored){}
+                try {
+                    s.executeUpdate("ALTER TABLE `FailedLogin` ADD COLUMN `ipAddress` TEXT NOT NULL");
+                } catch (Exception ignored) {
+                }
                 s.executeUpdate("ALTER TABLE `FailedLogin` MODIFY COLUMN `ipAddress` TEXT NOT NULL");
-                try{s.executeUpdate("ALTER TABLE `FailedLogin` ADD COLUMN `timestamp` BIGINT NOT NULL");}catch(Exception ignored){}
+                try {
+                    s.executeUpdate("ALTER TABLE `FailedLogin` ADD COLUMN `timestamp` BIGINT NOT NULL");
+                } catch (Exception ignored) {
+                }
                 s.executeUpdate("ALTER TABLE `FailedLogin` MODIFY COLUMN `timestamp` BIGINT NOT NULL");
-                try{s.executeUpdate("ALTER TABLE `FailedLogin` ADD COLUMN `reason` TEXT NOT NULL");}catch(Exception ignored){}
+                try {
+                    s.executeUpdate("ALTER TABLE `FailedLogin` ADD COLUMN `reason` TEXT NOT NULL");
+                } catch (Exception ignored) {
+                }
                 s.executeUpdate("ALTER TABLE `FailedLogin` MODIFY COLUMN `reason` TEXT NOT NULL");
-                try{s.executeUpdate("ALTER TABLE `FailedLogin` ADD COLUMN `uuid` TEXT NOT NULL");}catch(Exception ignored){}
+                try {
+                    s.executeUpdate("ALTER TABLE `FailedLogin` ADD COLUMN `uuid` TEXT NOT NULL");
+                } catch (Exception ignored) {
+                }
                 s.executeUpdate("ALTER TABLE `FailedLogin` MODIFY COLUMN `uuid` TEXT NOT NULL");
             }
             try (PreparedStatement ps = con.prepareStatement("SELECT id FROM `FailedLogin` ORDER BY id DESC LIMIT 1")) {
                 ResultSet rs = ps.executeQuery();
                 if (rs.next()) idCounter.set(rs.getInt(1) + 1);
             }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
-        catch(Exception e){ throw new RuntimeException(e); }
     }
-    private FailedLogin(){}
+
     /**
-     Use the static create method instead of this constructor,
-     if you plan to add this object to the database in the future, since
-     that method fetches and sets/reserves the {@link #id}.
-     */
-    public FailedLogin (int id, String username, String ipAddress, long timestamp, String reason, String uuid){
-        this.id = id;this.username = username;this.ipAddress = ipAddress;this.timestamp = timestamp;this.reason = reason;this.uuid = uuid;
-    }
-    /**
-     Database field/value. Not null. <br>
+     * Database field/value. Not null. <br>
      */
     public int id;
     /**
-     Database field/value. Not null. <br>
+     * Database field/value. Not null. <br>
      */
     public String username;
     /**
-     Database field/value. Not null. <br>
+     * Database field/value. Not null. <br>
      */
     public String ipAddress;
     /**
-     Database field/value. Not null. <br>
+     * Database field/value. Not null. <br>
      */
     public long timestamp;
     /**
-     Database field/value. Not null. <br>
+     * Database field/value. Not null. <br>
      */
     public String reason;
     /**
-     Database field/value. Not null. <br>
+     * Database field/value. Not null. <br>
      */
     public String uuid;
+    private FailedLogin() {
+    }
     /**
-     Creates and returns an object that can be added to this table.
-     Increments the id (thread-safe) and sets it for this object (basically reserves a space in the database).
-     Note that the parameters of this method represent "NOT NULL" fields in the table and thus should not be null.
-     Also note that this method will NOT add the object to the table.
+     * Use the static create method instead of this constructor,
+     * if you plan to add this object to the database in the future, since
+     * that method fetches and sets/reserves the {@link #id}.
      */
-    public static FailedLogin create( String username, String ipAddress, long timestamp, String reason, String uuid) {
+    public FailedLogin(int id, String username, String ipAddress, long timestamp, String reason, String uuid) {
+        this.id = id;
+        this.username = username;
+        this.ipAddress = ipAddress;
+        this.timestamp = timestamp;
+        this.reason = reason;
+        this.uuid = uuid;
+    }
+
+    /**
+     * Creates and returns an object that can be added to this table.
+     * Increments the id (thread-safe) and sets it for this object (basically reserves a space in the database).
+     * Note that the parameters of this method represent "NOT NULL" fields in the table and thus should not be null.
+     * Also note that this method will NOT add the object to the table.
+     */
+    public static FailedLogin create(String username, String ipAddress, long timestamp, String reason, String uuid) {
         int id = idCounter.getAndIncrement();
         FailedLogin obj = new FailedLogin(id, username, ipAddress, timestamp, reason, uuid);
         return obj;
     }
 
     /**
-     Convenience method for creating and directly adding a new object to the table.
-     Note that the parameters of this method represent "NOT NULL" fields in the table and thus should not be null.
+     * Convenience method for creating and directly adding a new object to the table.
+     * Note that the parameters of this method represent "NOT NULL" fields in the table and thus should not be null.
      */
-    public static FailedLogin createAndAdd( String username, String ipAddress, long timestamp, String reason, String uuid)  {
+    public static FailedLogin createAndAdd(String username, String ipAddress, long timestamp, String reason, String uuid) {
         int id = idCounter.getAndIncrement();
         FailedLogin obj = new FailedLogin(id, username, ipAddress, timestamp, reason, uuid);
         add(obj);
@@ -112,38 +140,45 @@ public class FailedLogin{
     }
 
     /**
-     @return a list containing all objects in this table.
+     * @return a list containing all objects in this table.
      */
-    public static List<FailedLogin> get()  {return get(null);}
+    public static List<FailedLogin> get() {
+        return get(null);
+    }
+
     /**
-     @return object with the provided id or null if there is no object with the provided id in this table.
-     @throws Exception on SQL issues.
+     * @return object with the provided id or null if there is no object with the provided id in this table.
+     * @throws Exception on SQL issues.
      */
-    public static FailedLogin get(int id)  {
-        try{
-            return get("id = "+id).get(0);
-        }catch(IndexOutOfBoundsException ignored){}
-        catch(Exception e){throw new RuntimeException(e);}
+    public static FailedLogin get(int id) {
+        try {
+            return get("id = " + id).get(0);
+        } catch (IndexOutOfBoundsException ignored) {
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
         return null;
     }
+
     /**
-     Example: <br>
-     get("username=? AND age=?", "Peter", 33);  <br>
-     @param where can be null. Your SQL WHERE statement (without the leading WHERE).
-     @param whereValues can be null. Your SQL WHERE statement values to set for '?'.
-     @return a list containing only objects that match the provided SQL WHERE statement (no matches = empty list).
-     if that statement is null, returns all the contents of this table.
+     * Example: <br>
+     * get("username=? AND age=?", "Peter", 33);  <br>
+     *
+     * @param where       can be null. Your SQL WHERE statement (without the leading WHERE).
+     * @param whereValues can be null. Your SQL WHERE statement values to set for '?'.
+     * @return a list containing only objects that match the provided SQL WHERE statement (no matches = empty list).
+     * if that statement is null, returns all the contents of this table.
      */
-    public static List<FailedLogin> get(String where, Object... whereValues)  {
+    public static List<FailedLogin> get(String where, Object... whereValues) {
         List<FailedLogin> list = new ArrayList<>();
         try (PreparedStatement ps = con.prepareStatement(
                 "SELECT `id`,`username`,`ipAddress`,`timestamp`,`reason`,`uuid`" +
                         " FROM `FailedLogin`" +
-                        (where != null ? ("WHERE "+where) : ""))) {
-            if(where!=null && whereValues!=null)
+                        (where != null ? ("WHERE " + where) : ""))) {
+            if (where != null && whereValues != null)
                 for (int i = 0; i < whereValues.length; i++) {
                     Object val = whereValues[i];
-                    ps.setObject(i+1, val);
+                    ps.setObject(i + 1, val);
                 }
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
@@ -156,18 +191,21 @@ public class FailedLogin{
                 obj.reason = rs.getString(5);
                 obj.uuid = rs.getString(6);
             }
-        }catch(Exception e){throw new RuntimeException(e);}
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
         return list;
     }
 
     /**
-     Searches the provided object in the database (by its id),
-     and updates all its fields.
-     @throws Exception when failed to find by id or other SQL issues.
+     * Searches the provided object in the database (by its id),
+     * and updates all its fields.
+     *
+     * @throws Exception when failed to find by id or other SQL issues.
      */
-    public static void update(FailedLogin obj)  {
+    public static void update(FailedLogin obj) {
         try (PreparedStatement ps = con.prepareStatement(
-                "UPDATE `FailedLogin` SET `id`=?,`username`=?,`ipAddress`=?,`timestamp`=?,`reason`=?,`uuid`=? WHERE id="+obj.id)) {
+                "UPDATE `FailedLogin` SET `id`=?,`username`=?,`ipAddress`=?,`timestamp`=?,`reason`=?,`uuid`=? WHERE id=" + obj.id)) {
             ps.setInt(1, obj.id);
             ps.setString(2, obj.username);
             ps.setString(3, obj.ipAddress);
@@ -175,13 +213,15 @@ public class FailedLogin{
             ps.setString(5, obj.reason);
             ps.setString(6, obj.uuid);
             ps.executeUpdate();
-        }catch(Exception e){throw new RuntimeException(e);}
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**
-     Adds the provided object to the database (note that the id is not checked for duplicates).
+     * Adds the provided object to the database (note that the id is not checked for duplicates).
      */
-    public static void add(FailedLogin obj)  {
+    public static void add(FailedLogin obj) {
         try (PreparedStatement ps = con.prepareStatement(
                 "INSERT INTO `FailedLogin` (`id`,`username`,`ipAddress`,`timestamp`,`reason`,`uuid`) VALUES (?,?,?,?,?,?)")) {
             ps.setInt(1, obj.id);
@@ -191,59 +231,74 @@ public class FailedLogin{
             ps.setString(5, obj.reason);
             ps.setString(6, obj.uuid);
             ps.executeUpdate();
-        }catch(Exception e){throw new RuntimeException(e);}
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**
-     Deletes the provided object from the database.
+     * Deletes the provided object from the database.
      */
-    public static void remove(FailedLogin obj)  {
-        remove("id = "+obj.id);
+    public static void remove(FailedLogin obj) {
+        remove("id = " + obj.id);
     }
+
     /**
-     Example: <br>
-     remove("username=?", "Peter"); <br>
-     Deletes the objects that are found by the provided SQL WHERE statement, from the database.
-     @param whereValues can be null. Your SQL WHERE statement values to set for '?'.
+     * Example: <br>
+     * remove("username=?", "Peter"); <br>
+     * Deletes the objects that are found by the provided SQL WHERE statement, from the database.
+     *
+     * @param whereValues can be null. Your SQL WHERE statement values to set for '?'.
      */
-    public static void remove(String where, Object... whereValues)  {
+    public static void remove(String where, Object... whereValues) {
         java.util.Objects.requireNonNull(where);
         try (PreparedStatement ps = con.prepareStatement(
-                "DELETE FROM `FailedLogin` WHERE "+where)) {
-            if(whereValues != null)
+                "DELETE FROM `FailedLogin` WHERE " + where)) {
+            if (whereValues != null)
                 for (int i = 0; i < whereValues.length; i++) {
                     Object val = whereValues[i];
-                    ps.setObject(i+1, val);
+                    ps.setObject(i + 1, val);
                 }
             ps.executeUpdate();
-        }catch(Exception e){throw new RuntimeException(e);}
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    public FailedLogin clone(){
-        return new FailedLogin(this.id,this.username,this.ipAddress,this.timestamp,this.reason,this.uuid);
-    }
-    public String toPrintString(){
-        return  ""+"id="+this.id+" "+"username="+this.username+" "+"ipAddress="+this.ipAddress+" "+"timestamp="+this.timestamp+" "+"reason="+this.reason+" "+"uuid="+this.uuid+" ";
-    }
     public static WHERE whereId() {
         return new WHERE("`id`");
     }
+
     public static WHERE whereUsername() {
         return new WHERE("`username`");
     }
+
     public static WHERE whereIpAddress() {
         return new WHERE("`ipAddress`");
     }
+
     public static WHERE whereTimestamp() {
         return new WHERE("`timestamp`");
     }
+
     public static WHERE whereReason() {
         return new WHERE("`reason`");
     }
+
     public static WHERE whereUuid() {
         return new WHERE("`uuid`");
     }
+
+    public FailedLogin clone() {
+        return new FailedLogin(this.id, this.username, this.ipAddress, this.timestamp, this.reason, this.uuid);
+    }
+
+    public String toPrintString() {
+        return "" + "id=" + this.id + " " + "username=" + this.username + " " + "ipAddress=" + this.ipAddress + " " + "timestamp=" + this.timestamp + " " + "reason=" + this.reason + " " + "uuid=" + this.uuid + " ";
+    }
+
     public static class WHERE {
+        private final String columnName;
         /**
          * Remember to prepend WHERE on the final SQL statement.
          * This is not done by this class due to performance reasons. <p>
@@ -259,7 +314,7 @@ public class FailedLogin{
         public StringBuilder orderByBuilder = new StringBuilder();
         public StringBuilder limitBuilder = new StringBuilder();
         List<Object> whereObjects = new ArrayList<>();
-        private final String columnName;
+
         public WHERE(String columnName) {
             this.columnName = columnName;
         }
@@ -268,26 +323,26 @@ public class FailedLogin{
          * Executes the generated SQL statement
          * and returns a list of objects matching the query.
          */
-        public List<FailedLogin> get()  {
+        public List<FailedLogin> get() {
             String orderBy = orderByBuilder.toString();
-            if(!orderBy.isEmpty()) orderBy = " ORDER BY "+orderBy.substring(0, orderBy.length()-2)+" ";
-            if(!whereObjects.isEmpty())
-                return FailedLogin.get(sqlBuilder.toString()+orderBy+limitBuilder.toString(), whereObjects.toArray());
+            if (!orderBy.isEmpty()) orderBy = " ORDER BY " + orderBy.substring(0, orderBy.length() - 2) + " ";
+            if (!whereObjects.isEmpty())
+                return FailedLogin.get(sqlBuilder.toString() + orderBy + limitBuilder.toString(), whereObjects.toArray());
             else
-                return FailedLogin.get(sqlBuilder.toString()+orderBy+limitBuilder.toString(), (Object[]) null);
+                return FailedLogin.get(sqlBuilder.toString() + orderBy + limitBuilder.toString(), (Object[]) null);
         }
 
         /**
          * Executes the generated SQL statement
          * and removes the objects matching the query.
          */
-        public void remove()  {
+        public void remove() {
             String orderBy = orderByBuilder.toString();
-            if(!orderBy.isEmpty()) orderBy = " ORDER BY "+orderBy.substring(0, orderBy.length()-2)+" ";
-            if(!whereObjects.isEmpty())
-                FailedLogin.remove(sqlBuilder.toString()+orderBy+limitBuilder.toString(), whereObjects.toArray());
+            if (!orderBy.isEmpty()) orderBy = " ORDER BY " + orderBy.substring(0, orderBy.length() - 2) + " ";
+            if (!whereObjects.isEmpty())
+                FailedLogin.remove(sqlBuilder.toString() + orderBy + limitBuilder.toString(), whereObjects.toArray());
             else
-                FailedLogin.remove(sqlBuilder.toString()+orderBy+limitBuilder.toString(), (Object[]) null);
+                FailedLogin.remove(sqlBuilder.toString() + orderBy + limitBuilder.toString(), (Object[]) null);
         }
 
         /**
@@ -295,7 +350,7 @@ public class FailedLogin{
          */
         public WHERE and(WHERE where) {
             String sql = where.sqlBuilder.toString();
-            if(!sql.isEmpty()) {
+            if (!sql.isEmpty()) {
                 sqlBuilder.append("AND (").append(sql).append(") ");
                 whereObjects.addAll(where.whereObjects);
             }
@@ -308,7 +363,7 @@ public class FailedLogin{
          */
         public WHERE or(WHERE where) {
             String sql = where.sqlBuilder.toString();
-            if(!sql.isEmpty()) {
+            if (!sql.isEmpty()) {
                 sqlBuilder.append("OR (").append(sql).append(") ");
                 whereObjects.addAll(where.whereObjects);
             }
@@ -464,4 +519,5 @@ public class FailedLogin{
             return this;
         }
 
-    }}
+    }
+}

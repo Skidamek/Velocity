@@ -282,8 +282,12 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
     return Optional.ofNullable(virtualHost);
   }
 
-  void setPermissionFunction(PermissionFunction permissionFunction) {
+  public void setPermissionFunction(PermissionFunction permissionFunction) {
     this.permissionFunction = permissionFunction;
+  }
+
+  public PermissionFunction getPermissionFunction(){
+    return this.permissionFunction;
   }
 
   @Override

@@ -22,10 +22,8 @@ import com.velocitypowered.api.event.PostOrder;
 import com.velocitypowered.api.event.connection.DisconnectEvent;
 import com.velocitypowered.api.event.connection.LoginEvent;
 import com.velocitypowered.api.event.connection.PreLoginEvent;
-import com.velocitypowered.api.event.permission.PermissionsSetupEvent;
 import com.velocitypowered.api.event.player.ServerConnectedEvent;
 import com.velocitypowered.api.event.player.ServerPreConnectEvent;
-import com.velocitypowered.api.permission.PermissionProvider;
 import com.velocitypowered.api.plugin.PluginContainer;
 import com.velocitypowered.api.plugin.PluginDescription;
 import com.velocitypowered.api.proxy.Player;
@@ -36,12 +34,10 @@ import com.velocitypowered.proxy.auth.database.BannedUser;
 import com.velocitypowered.proxy.auth.database.Database;
 import com.velocitypowered.proxy.auth.database.RegisteredUser;
 import com.velocitypowered.proxy.auth.database.Session;
-import com.velocitypowered.proxy.auth.perms.MutablePermissionProvider;
 import com.velocitypowered.proxy.auth.perms.NoPermissionPlayer;
 import com.velocitypowered.proxy.auth.utils.UtilsTime;
+import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import net.elytrium.limboapi.LimboAPI;
-import net.elytrium.limboapi.api.chunk.Dimension;
-import net.elytrium.limboapi.api.player.GameMode;
 import net.elytrium.limboapi.server.LimboImpl;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextColor;
@@ -52,7 +48,6 @@ import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
-import java.util.function.Predicate;
 
 /**
  * Auth manager for velocity, which was originally a plugin.
@@ -74,41 +69,7 @@ public class VelocityAuth implements PluginContainer {
     public int failedLoginBanTimeSeconds;
     public int minPasswordLength;
     public ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newCachedThreadPool();
-
-    @Override
-    public PluginDescription getDescription() {
-        return new PluginDescription() {
-            @Override
-            public String getId() {
-                return "auth";
-            }
-
-            @Override
-            public Optional<String> getName() {
-                return Optional.of("VelocityAuth");
-            }
-
-            @Override
-            public Optional<String> getVersion() {
-                return Optional.of("internal");
-            }
-
-            @Override
-            public Optional<String> getDescription() {
-                return Optional.of("Manages authentication of players.");
-            }
-
-            @Override
-            public List<String> getAuthors() {
-                return Collections.singletonList("Osiris-Team");
-            }
-        };
-    }
-
-    @Override
-    public Optional<?> getInstance() {
-        return Optional.of(this);
-    }
+    public LimboServer myLimboServer;
 
     public VelocityAuth(VelocityServer proxy, Logger logger, File authDirectory) throws Exception {
         INSTANCE = this;
@@ -154,6 +115,7 @@ public class VelocityAuth implements PluginContainer {
         logger.info("Loaded configuration. " + (System.currentTimeMillis() - now) + "ms");
         now = System.currentTimeMillis();
 
+        /*
         limboAPI = (LimboAPI) proxy.getPluginManager().getPlugin("limbo").get().getInstance().get();
         limboServer = (LimboImpl) limboAPI.createLimbo(limboAPI.createVirtualWorld(Dimension.THE_END, 0, 0, 0, 0, 0));
         limboServer.setName("auth");
@@ -162,8 +124,12 @@ public class VelocityAuth implements PluginContainer {
         limboServer.registerCommand(loginCommand.meta(), loginCommand);
         RegisterCommand registerCommand = new RegisterCommand();
         limboServer.registerCommand(registerCommand.meta(), registerCommand);
+         */
         // Note that registered commands kinda don't get executed by the limbo
         // without having the AuthSessionHandler/MySessionHandler for the player when sending to the limbo.
+
+        myLimboServer = new LimboServer();
+        myLimboServer.startNanoLimbo();
 
         logger.info("Started virtual limbo auth-server. "
                 + (System.currentTimeMillis() - now) + "ms");
@@ -177,7 +143,6 @@ public class VelocityAuth implements PluginContainer {
 
         proxy.getEventManager().register(this, PreLoginEvent.class, PostOrder.FIRST, e -> {
             try {
-                e.setResult(PreLoginEvent.PreLoginComponentResult.forceOfflineMode());
                 if (isWhitelistMode && !isRegistered(e.getUsername())) {
                     e.setResult(PreLoginEvent.PreLoginComponentResult.denied(
                             Component.text("You must be registered to join this server!")
@@ -191,7 +156,6 @@ public class VelocityAuth implements PluginContainer {
         });
         proxy.getEventManager().register(this, LoginEvent.class, PostOrder.FIRST, e -> {
             try {
-                logger.info(e.toString());
                 if (BannedUser.isBanned(getPlayerIp(e.getPlayer()), e.getPlayer().getUniqueId().toString())) {
                     BannedUser bannedUser = BannedUser.getBanned(getPlayerIp(e.getPlayer()), e.getPlayer().getUniqueId().toString());
                     Component message = new BanCommand().getBanText(bannedUser.timestampExpires, bannedUser.reason);
@@ -200,11 +164,11 @@ public class VelocityAuth implements PluginContainer {
                             + ". Player is banned for " + new UtilsTime().getFormattedString(bannedUser.timestampExpires) + ".");
                     return;
                 }
-                if(e.getPlayer().isOnlineMode()){ // Handle paid player
-                    if(isRegistered(e.getPlayer().getUsername())){
+                if (e.getPlayer().isOnlineMode()) { // Handle paid player
+                    if (isRegistered(e.getPlayer().getUsername())) {
                         String error = new AdminLoginCommand().execute(e.getPlayer().getUsername(), "", getPlayerIp(e.getPlayer()));
-                        if(error != null){
-                            if(error.contains("Invalid credentials")){
+                        if (error != null) {
+                            if (error.contains("Invalid credentials")) {
                                 // Means that this account has a password even though
                                 // this is not required (for paid players), which means
                                 // a cracked player was using this username before and created
@@ -214,16 +178,16 @@ public class VelocityAuth implements PluginContainer {
                                 registeredUser.password = "";
                                 RegisteredUser.update(registeredUser);
                                 error = new AdminLoginCommand().execute(e.getPlayer().getUsername(), "", getPlayerIp(e.getPlayer()));
-                                if(error!=null) e.getPlayer().disconnect(Component.text(error));
+                                if (error != null) e.getPlayer().disconnect(Component.text(error));
                             } else
                                 e.getPlayer().disconnect(Component.text(error));
                         }
                         // Successfully logged in.
-                    } else{ // Not registered yet
+                    } else { // Not registered yet
                         String error = new AdminRegisterCommand().execute(e.getPlayer().getUsername(), "", true);
-                        if(error!=null) e.getPlayer().disconnect(Component.text(error));
+                        if (error != null) e.getPlayer().disconnect(Component.text(error));
                         error = new AdminLoginCommand().execute(e.getPlayer().getUsername(), "", getPlayerIp(e.getPlayer()));
-                        if(error!=null) e.getPlayer().disconnect(Component.text(error));
+                        if (error != null) e.getPlayer().disconnect(Component.text(error));
                     }
                 }
             } catch (Exception ex) {
@@ -233,50 +197,30 @@ public class VelocityAuth implements PluginContainer {
         });
         proxy.getEventManager().register(this, ServerPreConnectEvent.class, PostOrder.FIRST, e -> {
             try {
+
+                ConnectedPlayer player = (ConnectedPlayer) e.getPlayer();
+
                 // Forward to limbo server for login/registration
                 // This server allows multiple players with the same username online
                 // at the same time and thus is perfect for safe authentication
                 // on offline (as well as online) servers.
-                if (!hasValidSession(e.getPlayer())) {
-                    //e.setResult(ServerPreConnectEvent.ServerResult.allowed(limboServer));
-                    e.setResult(ServerPreConnectEvent.ServerResult.denied());
-                    limboServer.spawnPlayer(e.getPlayer(), new LimboAuthSessionHandler());
+                if (!hasValidSession(player)) {
+                    // Remove all permissions of the user (except login/register commands), if not logged in
+                    // and restore them later, when logged in.
+                    noPermissionPlayers.add(new NoPermissionPlayer(
+                            player,
+                            NoPermissionPlayer.tempPermissionFunction,
+                            player.getPermissionFunction()));
+                    player.setPermissionFunction(NoPermissionPlayer.tempPermissionFunction);
+
+                    e.setResult(ServerPreConnectEvent.ServerResult.allowed(myLimboServer.registeredServer));
+                    //e.setResult(ServerPreConnectEvent.ServerResult.denied());
+                    //limboServer.spawnPlayer(player, new LimboAuthSessionHandler());
                     logger.info("Blocked connect to '" + e.getOriginalServer().getServerInfo().getName()
-                            + "' and forwarded " + e.getPlayer().getUsername() + " to authentication. Player not logged in.");
-                    return;
+                            + "' and forwarded " + player.getUsername() + " to authentication. Player not logged in.");
                 }
             } catch (Exception ex) {
                 ex.printStackTrace();
-            }
-        });
-        proxy.getEventManager().register(this, PermissionsSetupEvent.class, PostOrder.FIRST, e -> {
-            // Called once at permissions init for anything that can have permissions
-            // like the VelocityConsole or the Player object.
-            // At this state, the player is not logged in.
-            try {
-                // Remove all permissions of the user, if not logged in
-                // and restore them later, when logged in.
-                if (e.getSubject() instanceof Player) {
-                    Player player = (Player) e.getSubject();
-
-                    // Make sure that all permission providers for players are mutable
-                    PermissionProvider oldProvider = e.getProvider();
-                    MutablePermissionProvider newProvider =
-                            new MutablePermissionProvider(oldProvider.createFunction(e.getSubject()));
-                    e.setProvider(newProvider);
-
-                    if (!hasValidSession(player)) {
-                        Predicate<String> oldPermissionFunction = newProvider.hasPermission;
-                        newProvider.hasPermission = NoPermissionPlayer.tempPermissionFunction;
-                        noPermissionPlayers.add(new NoPermissionPlayer(
-                                player,
-                                newProvider,
-                                oldPermissionFunction));
-                    }
-                }
-                // else do nothing, since only relevant for players
-            } catch (Exception exception) {
-                exception.printStackTrace();
             }
         });
         proxy.getEventManager().register(this, ServerConnectedEvent.class, PostOrder.FIRST, e -> {
@@ -303,8 +247,8 @@ public class VelocityAuth implements PluginContainer {
         new AdminRegisterCommand().register();
         new AdminUnRegisterCommand().register();
         new AdminLoginCommand().register();
-        //new RegisterCommand().register(); // Only available in virtual limbo auth server
-        //new LoginCommand().register(); // Only available in virtual limbo auth server
+        new RegisterCommand().register(); // Only available in virtual limbo auth server
+        new LoginCommand().register(); // Only available in virtual limbo auth server
         new BanCommand().register();
         new UnbanCommand().register();
         new ListSessionsCommand().register();
@@ -314,6 +258,40 @@ public class VelocityAuth implements PluginContainer {
         logger.info("Initialised successfully! " + (System.currentTimeMillis() - start) + "ms");
     }
 
+    @Override
+    public PluginDescription getDescription() {
+        return new PluginDescription() {
+            @Override
+            public String getId() {
+                return "auth";
+            }
+
+            @Override
+            public Optional<String> getName() {
+                return Optional.of("VelocityAuth");
+            }
+
+            @Override
+            public Optional<String> getVersion() {
+                return Optional.of("internal");
+            }
+
+            @Override
+            public Optional<String> getDescription() {
+                return Optional.of("Manages authentication of players.");
+            }
+
+            @Override
+            public List<String> getAuthors() {
+                return Collections.singletonList("Osiris-Team");
+            }
+        };
+    }
+
+    @Override
+    public Optional<?> getInstance() {
+        return Optional.of(this);
+    }
 
     public String getPlayerIp(Player player) {
         return player.getRemoteAddress().getAddress().getHostAddress();

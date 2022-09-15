@@ -24,6 +24,7 @@ import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.proxy.auth.VelocityAuth;
 import com.velocitypowered.proxy.auth.database.FailedLogin;
 import com.velocitypowered.proxy.auth.perms.NoPermissionPlayer;
+import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextColor;
 
@@ -71,7 +72,7 @@ public class LoginCommand implements Command {
                     }
                     String password = args[0];
                     try {
-                        if(password == null || password.trim().isEmpty()) {
+                        if (password == null || password.trim().isEmpty()) {
                             sendFailedLogin(player, "Failed! Password cannot be null/empty.");
                             return;
                         }
@@ -93,8 +94,9 @@ public class LoginCommand implements Command {
                     try {
                         for (NoPermissionPlayer perm : VelocityAuth.INSTANCE.noPermissionPlayers) {
                             if (Objects.equals(perm.player.getUniqueId(), player.getUniqueId())) {
-                                perm.permissionProvider.hasPermission = perm.oldPermissionFunction;
                                 VelocityAuth.INSTANCE.noPermissionPlayers.remove(perm);
+                                ((ConnectedPlayer) perm.player).setPermissionFunction(perm.oldPermissionFunction);
+                                break;
                             }
                         }
                     } catch (Exception e) {

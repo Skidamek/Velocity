@@ -22,6 +22,8 @@ import com.moandjiezana.toml.Toml;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.proxy.server.ServerInfo;
 import net.lingala.zip4j.ZipFile;
+import ru.nanit.limbo.configuration.IpAddressWrapper;
+import ru.nanit.limbo.server.data.InfoForwarding;
 
 import java.io.*;
 import java.net.InetSocketAddress;
@@ -43,12 +45,50 @@ public class LimboServer {
 
     public int port = 0;
     public File velocityJar = null;
+    public RegisteredServer registeredServer;
+
+    // LOOHD Limbo:
     public Properties properties;
     public Process process;
-    public RegisteredServer registeredServer;
     public Thread errorReaderThread;
 
-    public void start() throws IOException, URISyntaxException {
+    // NanoLimbo:
+    public ru.nanit.limbo.server.LimboServer nanoLimbo;
+
+    public void startNanoLimbo() throws Exception {
+        port = findFreePort();
+        velocityJar = new File(VelocityAuth.class.getProtectionDomain().getCodeSource().getLocation()
+                .toURI()); // Get current jar
+        Objects.requireNonNull(velocityJar);
+
+        nanoLimbo = new ru.nanit.limbo.server.LimboServer(dir.toPath());
+        nanoLimbo.getConfig().load();
+        nanoLimbo.getConfig().put("bind").putJavaChildSection(new IpAddressWrapper("127.0.0.1", port));
+        String forwardingSecret = null;
+        try {
+            forwardingSecret = getForwardingSecret();
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.err.println("Continuing without forwarding secret even though its recommended to have one. See velocity documentation for details.");
+        }
+        if (forwardingSecret != null) {
+            InfoForwarding forwarding = new InfoForwarding();
+            forwarding.type = InfoForwarding.Type.MODERN;
+            forwarding.secret = forwardingSecret;
+            nanoLimbo.getConfig().put("infoForwarding").putJavaChildSection(forwarding);
+        } else {
+            InfoForwarding forwarding = new InfoForwarding();
+            forwarding.type = InfoForwarding.Type.NONE;
+            nanoLimbo.getConfig().put("infoForwarding").putJavaChildSection(forwarding);
+        }
+        nanoLimbo.getConfig().save();
+        nanoLimbo.start();
+
+        registeredServer = VelocityAuth.INSTANCE.proxy.registerServer(
+                new ServerInfo("auth_limbo", new InetSocketAddress("127.0.0.1", port)));
+    }
+
+    public void startLimbo() throws IOException, URISyntaxException {
         port = findFreePort();
         velocityJar = new File(VelocityAuth.class.getProtectionDomain().getCodeSource().getLocation()
                 .toURI()); // Get current jar
@@ -80,27 +120,8 @@ public class LimboServer {
         properties.put("allow-chat", "" + false);
         properties.put("bungeecord", "" + true);
         properties.put("default-gamemode", "spectator");
-        File velocityToml = new File(velocityJar.getParentFile() + "/velocity.toml");
-        if (!velocityToml.exists())
-            throw new FileNotFoundException("File does not exist or failed to find: " + velocityToml);
-        String forwardingSecret = new Toml().read(velocityToml)
-                .getString("forwarding-secret");
-        if (forwardingSecret == null || forwardingSecret.trim().isEmpty()) {
-            String forwardingSecretFilePath = new Toml().read(velocityToml).getString("forwarding-secret-file");
-            if (forwardingSecretFilePath == null || forwardingSecretFilePath.trim().isEmpty())
-                throw new NullPointerException("The 'forwarding-secret' or 'forwarding-secret-file' fields cannot be null or empty! Checked config: " + velocityToml);
-            File forwadingSecretFile = null;
-            if (forwardingSecretFilePath.startsWith("/") || forwardingSecretFilePath.startsWith("\\"))
-                forwadingSecretFile = new File(velocityToml.getParentFile() + forwardingSecretFilePath);
-            else
-                forwadingSecretFile = new File(velocityToml.getParentFile() + "/" + forwardingSecretFilePath);
-            if (!forwadingSecretFile.exists())
-                throw new FileNotFoundException("Failed to find file containing 'forwarding-secret'. Does not exist: " + forwadingSecretFile);
-            forwardingSecret = new String(Files.readAllBytes(forwadingSecretFile.toPath()), StandardCharsets.UTF_8);
-            if (forwardingSecret.trim().isEmpty())
-                throw new NullPointerException("The 'forwarding-secret' or 'forwarding-secret-file' fields cannot be null or empty! Checked config: " + velocityToml);
-        }
-        properties.put("forwarding-secrets", forwardingSecret);
+
+        properties.put("forwarding-secrets", getForwardingSecret());
         properties.put("velocity-modern", "" + true);
         properties.put("server-port", "" + port);
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(dir + "/server.properties"))) {
@@ -108,7 +129,7 @@ public class LimboServer {
         }
 
         registeredServer = VelocityAuth.INSTANCE.proxy.registerServer(
-                new ServerInfo("velocity_auth_limbo", new InetSocketAddress("127.0.0.1", port)));
+                new ServerInfo("auth_limbo", new InetSocketAddress("127.0.0.1", port)));
 
         process = new ProcessBuilder()
                 .directory(dir)
@@ -131,6 +152,30 @@ public class LimboServer {
             if (process != null && process.isAlive())
                 process.destroy();
         }));
+    }
+
+    private String getForwardingSecret() throws IOException {
+        File velocityToml = new File(velocityJar.getParentFile() + "/velocity.toml");
+        if (!velocityToml.exists())
+            throw new FileNotFoundException("File does not exist or failed to find: " + velocityToml);
+        String forwardingSecret = new Toml().read(velocityToml)
+                .getString("forwarding-secret");
+        if (forwardingSecret == null || forwardingSecret.trim().isEmpty()) {
+            String forwardingSecretFilePath = new Toml().read(velocityToml).getString("forwarding-secret-file");
+            if (forwardingSecretFilePath == null || forwardingSecretFilePath.trim().isEmpty())
+                throw new NullPointerException("The 'forwarding-secret' or 'forwarding-secret-file' fields cannot be null or empty! Checked config: " + velocityToml);
+            File forwadingSecretFile = null;
+            if (forwardingSecretFilePath.startsWith("/") || forwardingSecretFilePath.startsWith("\\"))
+                forwadingSecretFile = new File(velocityToml.getParentFile() + forwardingSecretFilePath);
+            else
+                forwadingSecretFile = new File(velocityToml.getParentFile() + "/" + forwardingSecretFilePath);
+            if (!forwadingSecretFile.exists())
+                throw new FileNotFoundException("Failed to find file containing 'forwarding-secret'. Does not exist: " + forwadingSecretFile);
+            forwardingSecret = new String(Files.readAllBytes(forwadingSecretFile.toPath()), StandardCharsets.UTF_8);
+            if (forwardingSecret.trim().isEmpty())
+                throw new NullPointerException("The 'forwarding-secret' or 'forwarding-secret-file' fields cannot be null or empty! Checked config: " + velocityToml);
+        }
+        return forwardingSecret;
     }
 
     private int findFreePort() {

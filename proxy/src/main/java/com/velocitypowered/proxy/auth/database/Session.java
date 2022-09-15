@@ -17,114 +17,151 @@
  */
 
 package com.velocitypowered.proxy.auth.database;
-import java.util.List;
+
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.Statement;
 import java.util.ArrayList;
-import java.sql.*;
+import java.util.List;
 
 /**
- Generated class by <a href="https://github.com/Osiris-Team/jSQL-Gen">jSQL-Gen</a>
- that contains static methods for fetching/updating data from the "Session" table.
- A single object/instance of this class represents a single row in the table
- and data can be accessed via its public fields. <p>
- Its not recommended to modify this class but it should be OK to add new methods to it.
- If modifications are really needed create a pull request directly to jSQL-Gen instead.
+ * Generated class by <a href="https://github.com/Osiris-Team/jSQL-Gen">jSQL-Gen</a>
+ * that contains static methods for fetching/updating data from the "Session" table.
+ * A single object/instance of this class represents a single row in the table
+ * and data can be accessed via its public fields. <p>
+ * Its not recommended to modify this class but it should be OK to add new methods to it.
+ * If modifications are really needed create a pull request directly to jSQL-Gen instead.
  */
-public class Session{
-    private static java.sql.Connection con;
-    private static java.util.concurrent.atomic.AtomicInteger idCounter = new java.util.concurrent.atomic.AtomicInteger(0);
+public class Session {
+    private static final java.sql.Connection con;
+    private static final java.util.concurrent.atomic.AtomicInteger idCounter = new java.util.concurrent.atomic.AtomicInteger(0);
+
     static {
-        try{
+        try {
             con = java.sql.DriverManager.getConnection(Database.url, Database.username, Database.password);
             try (Statement s = con.createStatement()) {
                 s.executeUpdate("CREATE TABLE IF NOT EXISTS `Session` (`id` INT NOT NULL PRIMARY KEY)");
-                try{s.executeUpdate("ALTER TABLE `Session` ADD COLUMN `userId` INT NOT NULL");}catch(Exception ignored){}
+                try {
+                    s.executeUpdate("ALTER TABLE `Session` ADD COLUMN `userId` INT NOT NULL");
+                } catch (Exception ignored) {
+                }
                 s.executeUpdate("ALTER TABLE `Session` MODIFY COLUMN `userId` INT NOT NULL");
-                try{s.executeUpdate("ALTER TABLE `Session` ADD COLUMN `ipAddress` TEXT NOT NULL");}catch(Exception ignored){}
+                try {
+                    s.executeUpdate("ALTER TABLE `Session` ADD COLUMN `ipAddress` TEXT NOT NULL");
+                } catch (Exception ignored) {
+                }
                 s.executeUpdate("ALTER TABLE `Session` MODIFY COLUMN `ipAddress` TEXT NOT NULL");
-                try{s.executeUpdate("ALTER TABLE `Session` ADD COLUMN `timestampExpires` BIGINT NOT NULL");}catch(Exception ignored){}
+                try {
+                    s.executeUpdate("ALTER TABLE `Session` ADD COLUMN `timestampExpires` BIGINT NOT NULL");
+                } catch (Exception ignored) {
+                }
                 s.executeUpdate("ALTER TABLE `Session` MODIFY COLUMN `timestampExpires` BIGINT NOT NULL");
-                try{s.executeUpdate("ALTER TABLE `Session` ADD COLUMN `isActive` TINYINT");}catch(Exception ignored){}
+                try {
+                    s.executeUpdate("ALTER TABLE `Session` ADD COLUMN `isActive` TINYINT");
+                } catch (Exception ignored) {
+                }
                 s.executeUpdate("ALTER TABLE `Session` MODIFY COLUMN `isActive` TINYINT");
-                try{s.executeUpdate("ALTER TABLE `Session` ADD COLUMN `username` TEXT NOT NULL");}catch(Exception ignored){}
+                try {
+                    s.executeUpdate("ALTER TABLE `Session` ADD COLUMN `username` TEXT NOT NULL");
+                } catch (Exception ignored) {
+                }
                 s.executeUpdate("ALTER TABLE `Session` MODIFY COLUMN `username` TEXT NOT NULL");
             }
             try (PreparedStatement ps = con.prepareStatement("SELECT id FROM `Session` ORDER BY id DESC LIMIT 1")) {
                 ResultSet rs = ps.executeQuery();
                 if (rs.next()) idCounter.set(rs.getInt(1) + 1);
             }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
-        catch(Exception e){ throw new RuntimeException(e); }
     }
-    private Session(){}
+
     /**
-     Use the static create method instead of this constructor,
-     if you plan to add this object to the database in the future, since
-     that method fetches and sets/reserves the {@link #id}.
-     */
-    public Session (int id, int userId, String ipAddress, long timestampExpires, String username){
-        this.id = id;this.userId = userId;this.ipAddress = ipAddress;this.timestampExpires = timestampExpires;this.username = username;
-    }
-    /**
-     Use the static create method instead of this constructor,
-     if you plan to add this object to the database in the future, since
-     that method fetches and sets/reserves the {@link #id}.
-     */
-    public Session (int id, int userId, String ipAddress, long timestampExpires, byte isActive, String username){
-        this.id = id;this.userId = userId;this.ipAddress = ipAddress;this.timestampExpires = timestampExpires;this.isActive = isActive;this.username = username;
-    }
-    /**
-     Database field/value. Not null. <br>
+     * Database field/value. Not null. <br>
      */
     public int id;
     /**
-     Database field/value. Not null. <br>
+     * Database field/value. Not null. <br>
      */
     public int userId;
     /**
-     Database field/value. Not null. <br>
+     * Database field/value. Not null. <br>
      */
     public String ipAddress;
     /**
-     Database field/value. Not null. <br>
+     * Database field/value. Not null. <br>
      */
     public long timestampExpires;
     /**
-     Database field/value. <br>
+     * Database field/value. <br>
      */
     public byte isActive;
     /**
-     Database field/value. Not null. <br>
+     * Database field/value. Not null. <br>
      */
     public String username;
+    private Session() {
+    }
     /**
-     Creates and returns an object that can be added to this table.
-     Increments the id (thread-safe) and sets it for this object (basically reserves a space in the database).
-     Note that the parameters of this method represent "NOT NULL" fields in the table and thus should not be null.
-     Also note that this method will NOT add the object to the table.
+     * Use the static create method instead of this constructor,
+     * if you plan to add this object to the database in the future, since
+     * that method fetches and sets/reserves the {@link #id}.
      */
-    public static Session create( int userId, String ipAddress, long timestampExpires, String username) {
+    public Session(int id, int userId, String ipAddress, long timestampExpires, String username) {
+        this.id = id;
+        this.userId = userId;
+        this.ipAddress = ipAddress;
+        this.timestampExpires = timestampExpires;
+        this.username = username;
+    }
+    /**
+     * Use the static create method instead of this constructor,
+     * if you plan to add this object to the database in the future, since
+     * that method fetches and sets/reserves the {@link #id}.
+     */
+    public Session(int id, int userId, String ipAddress, long timestampExpires, byte isActive, String username) {
+        this.id = id;
+        this.userId = userId;
+        this.ipAddress = ipAddress;
+        this.timestampExpires = timestampExpires;
+        this.isActive = isActive;
+        this.username = username;
+    }
+
+    /**
+     * Creates and returns an object that can be added to this table.
+     * Increments the id (thread-safe) and sets it for this object (basically reserves a space in the database).
+     * Note that the parameters of this method represent "NOT NULL" fields in the table and thus should not be null.
+     * Also note that this method will NOT add the object to the table.
+     */
+    public static Session create(int userId, String ipAddress, long timestampExpires, String username) {
         int id = idCounter.getAndIncrement();
         Session obj = new Session(id, userId, ipAddress, timestampExpires, username);
         return obj;
     }
 
     /**
-     Creates and returns an object that can be added to this table.
-     Increments the id (thread-safe) and sets it for this object (basically reserves a space in the database).
-     Note that this method will NOT add the object to the table.
+     * Creates and returns an object that can be added to this table.
+     * Increments the id (thread-safe) and sets it for this object (basically reserves a space in the database).
+     * Note that this method will NOT add the object to the table.
      */
-    public static Session create( int userId, String ipAddress, long timestampExpires, byte isActive, String username)  {
+    public static Session create(int userId, String ipAddress, long timestampExpires, byte isActive, String username) {
         int id = idCounter.getAndIncrement();
         Session obj = new Session();
-        obj.id=id; obj.userId=userId; obj.ipAddress=ipAddress; obj.timestampExpires=timestampExpires; obj.isActive=isActive; obj.username=username;
+        obj.id = id;
+        obj.userId = userId;
+        obj.ipAddress = ipAddress;
+        obj.timestampExpires = timestampExpires;
+        obj.isActive = isActive;
+        obj.username = username;
         return obj;
     }
 
     /**
-     Convenience method for creating and directly adding a new object to the table.
-     Note that the parameters of this method represent "NOT NULL" fields in the table and thus should not be null.
+     * Convenience method for creating and directly adding a new object to the table.
+     * Note that the parameters of this method represent "NOT NULL" fields in the table and thus should not be null.
      */
-    public static Session createAndAdd( int userId, String ipAddress, long timestampExpires, String username)  {
+    public static Session createAndAdd(int userId, String ipAddress, long timestampExpires, String username) {
         int id = idCounter.getAndIncrement();
         Session obj = new Session(id, userId, ipAddress, timestampExpires, username);
         add(obj);
@@ -132,49 +169,61 @@ public class Session{
     }
 
     /**
-     Convenience method for creating and directly adding a new object to the table.
+     * Convenience method for creating and directly adding a new object to the table.
      */
-    public static Session createAndAdd( int userId, String ipAddress, long timestampExpires, byte isActive, String username)  {
+    public static Session createAndAdd(int userId, String ipAddress, long timestampExpires, byte isActive, String username) {
         int id = idCounter.getAndIncrement();
         Session obj = new Session();
-        obj.id=id; obj.userId=userId; obj.ipAddress=ipAddress; obj.timestampExpires=timestampExpires; obj.isActive=isActive; obj.username=username;
+        obj.id = id;
+        obj.userId = userId;
+        obj.ipAddress = ipAddress;
+        obj.timestampExpires = timestampExpires;
+        obj.isActive = isActive;
+        obj.username = username;
         add(obj);
         return obj;
     }
 
     /**
-     @return a list containing all objects in this table.
+     * @return a list containing all objects in this table.
      */
-    public static List<Session> get()  {return get(null);}
+    public static List<Session> get() {
+        return get(null);
+    }
+
     /**
-     @return object with the provided id or null if there is no object with the provided id in this table.
-     @throws Exception on SQL issues.
+     * @return object with the provided id or null if there is no object with the provided id in this table.
+     * @throws Exception on SQL issues.
      */
-    public static Session get(int id)  {
-        try{
-            return get("id = "+id).get(0);
-        }catch(IndexOutOfBoundsException ignored){}
-        catch(Exception e){throw new RuntimeException(e);}
+    public static Session get(int id) {
+        try {
+            return get("id = " + id).get(0);
+        } catch (IndexOutOfBoundsException ignored) {
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
         return null;
     }
+
     /**
-     Example: <br>
-     get("username=? AND age=?", "Peter", 33);  <br>
-     @param where can be null. Your SQL WHERE statement (without the leading WHERE).
-     @param whereValues can be null. Your SQL WHERE statement values to set for '?'.
-     @return a list containing only objects that match the provided SQL WHERE statement (no matches = empty list).
-     if that statement is null, returns all the contents of this table.
+     * Example: <br>
+     * get("username=? AND age=?", "Peter", 33);  <br>
+     *
+     * @param where       can be null. Your SQL WHERE statement (without the leading WHERE).
+     * @param whereValues can be null. Your SQL WHERE statement values to set for '?'.
+     * @return a list containing only objects that match the provided SQL WHERE statement (no matches = empty list).
+     * if that statement is null, returns all the contents of this table.
      */
-    public static List<Session> get(String where, Object... whereValues)  {
+    public static List<Session> get(String where, Object... whereValues) {
         List<Session> list = new ArrayList<>();
         try (PreparedStatement ps = con.prepareStatement(
                 "SELECT `id`,`userId`,`ipAddress`,`timestampExpires`,`isActive`,`username`" +
                         " FROM `Session`" +
-                        (where != null ? ("WHERE "+where) : ""))) {
-            if(where!=null && whereValues!=null)
+                        (where != null ? ("WHERE " + where) : ""))) {
+            if (where != null && whereValues != null)
                 for (int i = 0; i < whereValues.length; i++) {
                     Object val = whereValues[i];
-                    ps.setObject(i+1, val);
+                    ps.setObject(i + 1, val);
                 }
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
@@ -187,18 +236,21 @@ public class Session{
                 obj.isActive = rs.getByte(5);
                 obj.username = rs.getString(6);
             }
-        }catch(Exception e){throw new RuntimeException(e);}
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
         return list;
     }
 
     /**
-     Searches the provided object in the database (by its id),
-     and updates all its fields.
-     @throws Exception when failed to find by id or other SQL issues.
+     * Searches the provided object in the database (by its id),
+     * and updates all its fields.
+     *
+     * @throws Exception when failed to find by id or other SQL issues.
      */
-    public static void update(Session obj)  {
+    public static void update(Session obj) {
         try (PreparedStatement ps = con.prepareStatement(
-                "UPDATE `Session` SET `id`=?,`userId`=?,`ipAddress`=?,`timestampExpires`=?,`isActive`=?,`username`=? WHERE id="+obj.id)) {
+                "UPDATE `Session` SET `id`=?,`userId`=?,`ipAddress`=?,`timestampExpires`=?,`isActive`=?,`username`=? WHERE id=" + obj.id)) {
             ps.setInt(1, obj.id);
             ps.setInt(2, obj.userId);
             ps.setString(3, obj.ipAddress);
@@ -206,13 +258,15 @@ public class Session{
             ps.setByte(5, obj.isActive);
             ps.setString(6, obj.username);
             ps.executeUpdate();
-        }catch(Exception e){throw new RuntimeException(e);}
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**
-     Adds the provided object to the database (note that the id is not checked for duplicates).
+     * Adds the provided object to the database (note that the id is not checked for duplicates).
      */
-    public static void add(Session obj)  {
+    public static void add(Session obj) {
         try (PreparedStatement ps = con.prepareStatement(
                 "INSERT INTO `Session` (`id`,`userId`,`ipAddress`,`timestampExpires`,`isActive`,`username`) VALUES (?,?,?,?,?,?)")) {
             ps.setInt(1, obj.id);
@@ -222,59 +276,74 @@ public class Session{
             ps.setByte(5, obj.isActive);
             ps.setString(6, obj.username);
             ps.executeUpdate();
-        }catch(Exception e){throw new RuntimeException(e);}
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**
-     Deletes the provided object from the database.
+     * Deletes the provided object from the database.
      */
-    public static void remove(Session obj)  {
-        remove("id = "+obj.id);
+    public static void remove(Session obj) {
+        remove("id = " + obj.id);
     }
+
     /**
-     Example: <br>
-     remove("username=?", "Peter"); <br>
-     Deletes the objects that are found by the provided SQL WHERE statement, from the database.
-     @param whereValues can be null. Your SQL WHERE statement values to set for '?'.
+     * Example: <br>
+     * remove("username=?", "Peter"); <br>
+     * Deletes the objects that are found by the provided SQL WHERE statement, from the database.
+     *
+     * @param whereValues can be null. Your SQL WHERE statement values to set for '?'.
      */
-    public static void remove(String where, Object... whereValues)  {
+    public static void remove(String where, Object... whereValues) {
         java.util.Objects.requireNonNull(where);
         try (PreparedStatement ps = con.prepareStatement(
-                "DELETE FROM `Session` WHERE "+where)) {
-            if(whereValues != null)
+                "DELETE FROM `Session` WHERE " + where)) {
+            if (whereValues != null)
                 for (int i = 0; i < whereValues.length; i++) {
                     Object val = whereValues[i];
-                    ps.setObject(i+1, val);
+                    ps.setObject(i + 1, val);
                 }
             ps.executeUpdate();
-        }catch(Exception e){throw new RuntimeException(e);}
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    public Session clone(){
-        return new Session(this.id,this.userId,this.ipAddress,this.timestampExpires,this.isActive,this.username);
-    }
-    public String toPrintString(){
-        return  ""+"id="+this.id+" "+"userId="+this.userId+" "+"ipAddress="+this.ipAddress+" "+"timestampExpires="+this.timestampExpires+" "+"isActive="+this.isActive+" "+"username="+this.username+" ";
-    }
     public static WHERE whereId() {
         return new WHERE("`id`");
     }
+
     public static WHERE whereUserId() {
         return new WHERE("`userId`");
     }
+
     public static WHERE whereIpAddress() {
         return new WHERE("`ipAddress`");
     }
+
     public static WHERE whereTimestampExpires() {
         return new WHERE("`timestampExpires`");
     }
+
     public static WHERE whereIsActive() {
         return new WHERE("`isActive`");
     }
+
     public static WHERE whereUsername() {
         return new WHERE("`username`");
     }
+
+    public Session clone() {
+        return new Session(this.id, this.userId, this.ipAddress, this.timestampExpires, this.isActive, this.username);
+    }
+
+    public String toPrintString() {
+        return "" + "id=" + this.id + " " + "userId=" + this.userId + " " + "ipAddress=" + this.ipAddress + " " + "timestampExpires=" + this.timestampExpires + " " + "isActive=" + this.isActive + " " + "username=" + this.username + " ";
+    }
+
     public static class WHERE {
+        private final String columnName;
         /**
          * Remember to prepend WHERE on the final SQL statement.
          * This is not done by this class due to performance reasons. <p>
@@ -290,7 +359,7 @@ public class Session{
         public StringBuilder orderByBuilder = new StringBuilder();
         public StringBuilder limitBuilder = new StringBuilder();
         List<Object> whereObjects = new ArrayList<>();
-        private final String columnName;
+
         public WHERE(String columnName) {
             this.columnName = columnName;
         }
@@ -299,26 +368,26 @@ public class Session{
          * Executes the generated SQL statement
          * and returns a list of objects matching the query.
          */
-        public List<Session> get()  {
+        public List<Session> get() {
             String orderBy = orderByBuilder.toString();
-            if(!orderBy.isEmpty()) orderBy = " ORDER BY "+orderBy.substring(0, orderBy.length()-2)+" ";
-            if(!whereObjects.isEmpty())
-                return Session.get(sqlBuilder.toString()+orderBy+limitBuilder.toString(), whereObjects.toArray());
+            if (!orderBy.isEmpty()) orderBy = " ORDER BY " + orderBy.substring(0, orderBy.length() - 2) + " ";
+            if (!whereObjects.isEmpty())
+                return Session.get(sqlBuilder.toString() + orderBy + limitBuilder.toString(), whereObjects.toArray());
             else
-                return Session.get(sqlBuilder.toString()+orderBy+limitBuilder.toString(), (Object[]) null);
+                return Session.get(sqlBuilder.toString() + orderBy + limitBuilder.toString(), (Object[]) null);
         }
 
         /**
          * Executes the generated SQL statement
          * and removes the objects matching the query.
          */
-        public void remove()  {
+        public void remove() {
             String orderBy = orderByBuilder.toString();
-            if(!orderBy.isEmpty()) orderBy = " ORDER BY "+orderBy.substring(0, orderBy.length()-2)+" ";
-            if(!whereObjects.isEmpty())
-                Session.remove(sqlBuilder.toString()+orderBy+limitBuilder.toString(), whereObjects.toArray());
+            if (!orderBy.isEmpty()) orderBy = " ORDER BY " + orderBy.substring(0, orderBy.length() - 2) + " ";
+            if (!whereObjects.isEmpty())
+                Session.remove(sqlBuilder.toString() + orderBy + limitBuilder.toString(), whereObjects.toArray());
             else
-                Session.remove(sqlBuilder.toString()+orderBy+limitBuilder.toString(), (Object[]) null);
+                Session.remove(sqlBuilder.toString() + orderBy + limitBuilder.toString(), (Object[]) null);
         }
 
         /**
@@ -326,7 +395,7 @@ public class Session{
          */
         public WHERE and(WHERE where) {
             String sql = where.sqlBuilder.toString();
-            if(!sql.isEmpty()) {
+            if (!sql.isEmpty()) {
                 sqlBuilder.append("AND (").append(sql).append(") ");
                 whereObjects.addAll(where.whereObjects);
             }
@@ -339,7 +408,7 @@ public class Session{
          */
         public WHERE or(WHERE where) {
             String sql = where.sqlBuilder.toString();
-            if(!sql.isEmpty()) {
+            if (!sql.isEmpty()) {
                 sqlBuilder.append("OR (").append(sql).append(") ");
                 whereObjects.addAll(where.whereObjects);
             }
@@ -495,4 +564,5 @@ public class Session{
             return this;
         }
 
-    }}
+    }
+}
