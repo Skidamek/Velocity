@@ -1,7 +1,7 @@
 # Velocity
 
 A Minecraft server proxy with unparalleled server support, scalability,
-and flexibility.
+and flexibility. This fork includes new commands and support for offline-mode players.
 
 ## Usage
 1. Download the velocity jar from the latest release [here](https://github.com/Osiris-Team/Velocity/releases).
