@@ -139,6 +139,12 @@ public class VelocityAuth implements PluginContainer {
         logger.info("Database connected. " + (System.currentTimeMillis() - now) + "ms");
         now = System.currentTimeMillis();
 
+        // Set all sessions to inactive at start
+        for (Session session : Session.whereIsActive().is(1).get()) {
+            session.isActive = 0;
+            Session.update(session);
+        }
+
         // Events below are registered in the order they get executed:
 
         proxy.getEventManager().register(this, PreLoginEvent.class, PostOrder.FIRST, e -> {
