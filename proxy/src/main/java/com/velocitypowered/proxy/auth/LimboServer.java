@@ -55,6 +55,11 @@ public class LimboServer {
     // NanoLimbo:
     public ru.nanit.limbo.server.LimboServer nanoLimbo;
 
+    public LimboServer() {
+        authDir.mkdirs();
+        dir.mkdirs();
+    }
+
     public void startNanoLimbo() throws Exception {
         port = findFreePort();
         velocityJar = new File(VelocityAuth.class.getProtectionDomain().getCodeSource().getLocation()
