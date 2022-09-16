@@ -136,43 +136,69 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
               return;
             }
 
-            mcConnection.eventLoop().execute(() -> {
-              byte[] oldVerify = (this.verify != null ? Arrays.copyOf(this.verify, this.verify.length) : null);
-              LoginState oldState = this.currentState;
-
-              // Send encryption request to offline-mode player too
-              EncryptionRequest request = generateEncryptionRequest();
-              this.verify = Arrays.copyOf(request.getVerifyToken(), 4);
-              mcConnection.write(request);
-              this.currentState = LoginState.ENCRYPTION_REQUEST_SENT;
-
-              if (!server.getConfiguration().isOnlineMode()){
-                VelocityAuth.INSTANCE.executor.execute(() -> {
-                  try {
-                    for (int i = 0; i < 30; i++) { // 3 seconds max
-                      Thread.sleep(100);
-                      if (this.currentState == LoginState.ENCRYPTION_RESPONSE_RECEIVED) {
-                        // Means we received a response which is handled in the
-                        // handle(EncryptionResponse packet) method further below.
-                        // Thus, our job here is done, and we return.
-                        return;
-                      }
-                    }
-                    mcConnection.eventLoop().execute(() -> {
-                      // Means that we didn't receive a response for the encryption within 3 seconds
-                      // thus continue with offline mode login instead:
-                      this.verify = oldVerify;
-                      this.currentState = oldState;
-                      mcConnection.setSessionHandler(new AuthSessionHandler(
-                              server, inbound, GameProfile.forOfflinePlayer(login.getUsername()), false
-                      ));
-                    });
-                  } catch (Exception e) {
-                    logger.error("Exception in pre-login stage", e);
+            if(mcConnection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_19_1) >= 0){
+              // online-mode players: OK
+              // offline-mode players: OK
+              mcConnection.eventLoop().execute(() -> {
+                if(packet.getHolderUuid() == null){ // Probably a connection from an offline/cracked player
+                  if (server.getConfiguration().isOnlineMode()) {
+                    inbound.disconnect(Component.text("This server does not allow offline-mode players."));
+                    return;
                   }
-                });
-              }
-            });
+                  mcConnection.setSessionHandler(new AuthSessionHandler(
+                          server, inbound, GameProfile.forOfflinePlayer(login.getUsername()), false
+                  ));
+                }
+                else { // Probably a connection from an online/regular player
+                  EncryptionRequest request = generateEncryptionRequest();
+                  this.verify = Arrays.copyOf(request.getVerifyToken(), 4);
+                  mcConnection.write(request);
+                  this.currentState = LoginState.ENCRYPTION_REQUEST_SENT;
+                }
+              });
+            } else {
+              // online-mode players: OK
+              // offline-mode players: This method of detection does not
+              // work on all Minecraft clients, some will get "Invalid Session" error and directly disconnect
+              // after the encryption request was sent. //TODO find a solution for this
+              mcConnection.eventLoop().execute(() -> {
+                byte[] oldVerify = (this.verify != null ? Arrays.copyOf(this.verify, this.verify.length) : null);
+                LoginState oldState = this.currentState;
+
+                // Send encryption request to offline-mode player too
+                EncryptionRequest request = generateEncryptionRequest();
+                this.verify = Arrays.copyOf(request.getVerifyToken(), 4);
+                mcConnection.write(request);
+                this.currentState = LoginState.ENCRYPTION_REQUEST_SENT;
+
+                if (!server.getConfiguration().isOnlineMode()){
+                  VelocityAuth.INSTANCE.executor.execute(() -> {
+                    try {
+                      for (int i = 0; i < 30; i++) { // 3 seconds max
+                        Thread.sleep(100);
+                        if (this.currentState == LoginState.ENCRYPTION_RESPONSE_RECEIVED) {
+                          // Means we received a response which is handled in the
+                          // handle(EncryptionResponse packet) method further below.
+                          // Thus, our job here is done, and we return.
+                          return;
+                        }
+                      }
+                      mcConnection.eventLoop().execute(() -> {
+                        // Means that we didn't receive a response for the encryption within 3 seconds
+                        // thus continue with offline mode login instead:
+                        this.verify = oldVerify;
+                        this.currentState = oldState;
+                        mcConnection.setSessionHandler(new AuthSessionHandler(
+                                server, inbound, GameProfile.forOfflinePlayer(login.getUsername()), false
+                        ));
+                      });
+                    } catch (Exception e) {
+                      logger.error("Exception in pre-login stage", e);
+                    }
+                  });
+                }
+              });
+            }
           });
         }, mcConnection.eventLoop())
         .exceptionally((ex) -> {
