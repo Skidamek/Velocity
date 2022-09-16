@@ -152,6 +152,9 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
                     for (int i = 0; i < 30; i++) { // 3 seconds max
                       Thread.sleep(100);
                       if (this.currentState == LoginState.ENCRYPTION_RESPONSE_RECEIVED) {
+                        // Means we received a response which is handled in the
+                        // handle(EncryptionResponse packet) method further below.
+                        // Thus, our job here is done, and we return.
                         return;
                       }
                     }
