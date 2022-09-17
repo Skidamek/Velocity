@@ -19,7 +19,8 @@ package com.velocitypowered.proxy.connection.client;
 
 import com.google.common.base.Preconditions;
 import com.google.common.primitives.Longs;
-import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.osiris.autoplug.core.json.Json;
 import com.velocitypowered.api.event.connection.PreLoginEvent;
 import com.velocitypowered.api.event.connection.PreLoginEvent.PreLoginComponentResult;
 import com.velocitypowered.api.network.ProtocolVersion;
@@ -170,14 +171,13 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
 
                 // Check the player's nickname to mojang api if that exists we can assume that the player has premium account and use premium authentication
                 String USERNAME = login.getUsername();
-                JsonElement MinecraftProfile = getMinecraftProfile(USERNAME);
+                JsonObject MinecraftProfile = getMinecraftProfile(USERNAME);
 
                 if (MinecraftProfile != null) {
-                  // TODO fix it here
                   String API_UUID = MinecraftProfile.get("id").getAsString();
                   String API_USERNAME = MinecraftProfile.get("name").getAsString();
 
-                  if (!API_UUID.equals("null")) {
+                  if (API_UUID != null && !API_UUID.equals("null")) {
                     if (USERNAME.equals(API_USERNAME)) {
                       // Player for 99% has premium account, if not, they must use nickname which is not registered on mojang api, otherwise they would get "Invalid Session" error
                       // So we can use premium authentication
@@ -218,24 +218,23 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
     return true;
   }
 
-  String API_URL_MOJANG = "https://api.mojang.com/users/profiles/minecraft/";
-  String API_URL_MINETOOLS = "https://api.minetools.eu/uuid/";
+  static String API_URL_MOJANG_BASE = "https://api.mojang.com/users/profiles/minecraft/";
+  static String API_URL_MINETOOLS_BASE = "https://api.minetools.eu/uuid/";
 
-  JsonElement getMinecraftProfile(String USERNAME) {
-    JsonElement JSON = null;
+  static JsonObject getMinecraftProfile(String USERNAME) {
+    JsonObject JSON = null;
 
-    API_URL_MOJANG = API_URL_MOJANG + USERNAME;
-    API_URL_MINETOOLS = API_URL_MINETOOLS + USERNAME;
+    String API_URL_MOJANG = API_URL_MOJANG_BASE + USERNAME;
+    String API_URL_MINETOOLS = API_URL_MINETOOLS_BASE + USERNAME;
 
-    // get Json Array from autoplug core
     try {
-      // TODO get JSON from API_URL_MOJANG
+      JSON = Json.fromUrlAsObject(API_URL_MOJANG);
     } catch (Exception e) { // Ignore if player doesn't have premium account, always will throw exception
     }
 
     if (JSON == null) {
       try {
-        // TODO get JSON from API_URL_MINETOOLS
+        JSON = Json.fromUrlAsObject(API_URL_MINETOOLS);
       } catch (Exception e) { // Means that both APIs are down
         ru.nanit.limbo.server.Logger.error("Exception when trying to get a Minecraft profile for " + USERNAME);
       }
