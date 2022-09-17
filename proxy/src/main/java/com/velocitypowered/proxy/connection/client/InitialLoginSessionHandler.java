@@ -20,7 +20,6 @@ package com.velocitypowered.proxy.connection.client;
 import com.google.common.base.Preconditions;
 import com.google.common.primitives.Longs;
 import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import com.velocitypowered.api.event.connection.PreLoginEvent;
 import com.velocitypowered.api.event.connection.PreLoginEvent.PreLoginComponentResult;
 import com.velocitypowered.api.network.ProtocolVersion;
@@ -28,7 +27,6 @@ import com.velocitypowered.api.proxy.crypto.IdentifiedKey;
 import com.velocitypowered.api.util.GameProfile;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.auth.VelocityAuth;
-import com.velocitypowered.proxy.auth.utils.GetJson;
 import com.velocitypowered.proxy.connection.MinecraftConnection;
 import com.velocitypowered.proxy.connection.MinecraftSessionHandler;
 import com.velocitypowered.proxy.crypto.IdentifiedKeyImpl;
@@ -46,7 +44,6 @@ import org.asynchttpclient.ListenableFuture;
 import org.asynchttpclient.Response;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 
-import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.security.GeneralSecurityException;
 import java.security.KeyPair;
@@ -176,6 +173,7 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
                 JsonElement MinecraftProfile = getMinecraftProfile(USERNAME);
 
                 if (MinecraftProfile != null) {
+                  // TODO fix it here
                   String API_UUID = MinecraftProfile.get("id").getAsString();
                   String API_USERNAME = MinecraftProfile.get("name").getAsString();
 
