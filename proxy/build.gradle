@@ -93,6 +93,7 @@ dependencies {
 
     // My dependencies:
     implementation "com.github.Osiris-Team:Dyml:9.5.9"
+    implementation 'com.github.Osiris-Team:AutoPlug-Core:15.1'
 
     // NanoLimbo:
     implementation 'org.spongepowered:configurate-yaml:4.1.2'
