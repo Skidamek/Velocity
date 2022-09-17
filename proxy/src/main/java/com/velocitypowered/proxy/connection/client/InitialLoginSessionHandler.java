@@ -50,6 +50,7 @@ import java.security.GeneralSecurityException;
 import java.security.KeyPair;
 import java.security.MessageDigest;
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ThreadLocalRandom;
@@ -148,15 +149,10 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
                     inbound.disconnect(Component.text("This server does not allow offline-mode players."));
                     return;
                   }
-                  mcConnection.setSessionHandler(new AuthSessionHandler(
-                          server, inbound, GameProfile.forOfflinePlayer(login.getUsername()), false
-                  ));
+                  connectOfflineMode();
                 }
                 else { // Probably a connection from an online/regular player
-                  EncryptionRequest request = generateEncryptionRequest();
-                  this.verify = Arrays.copyOf(request.getVerifyToken(), 4);
-                  mcConnection.write(request);
-                  this.currentState = LoginState.ENCRYPTION_REQUEST_SENT;
+                  sendEncryptionRequest();
                 }
               });
             } else {
@@ -166,45 +162,38 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
               // Work on all Minecraft clients, some will get "Invalid Session" error and directly disconnect from server,
               // if they are not premium players with nickname from some premium account the encryption request was sent.
               mcConnection.eventLoop().execute(() -> {
-                byte[] oldVerify = (this.verify != null ? Arrays.copyOf(this.verify, this.verify.length) : null);
-                LoginState oldState = this.currentState;
+                if(isRegisteredAtMojang(login.getUsername())){ // Probably a connection from an online/regular player
+                  byte[] oldVerify = (this.verify != null ? Arrays.copyOf(this.verify, this.verify.length) : null);
+                  LoginState oldState = this.currentState;
+                  sendEncryptionRequest();
 
-                // Check the player's nickname to mojang api if that exists we can assume that the player has premium account and use premium authentication
-                String USERNAME = login.getUsername();
-                JsonObject MinecraftProfile = getMinecraftProfile(USERNAME);
-
-                if (MinecraftProfile != null) {
-                  String API_UUID = MinecraftProfile.get("id").getAsString();
-                  String API_USERNAME = MinecraftProfile.get("name").getAsString();
-
-                  if (API_UUID != null && !API_UUID.equals("null")) {
-                    if (USERNAME.equals(API_USERNAME)) {
-                      // Player for 99% has premium account, if not, they must use nickname which is not registered on mojang api, otherwise they would get "Invalid Session" error
-                      // So we can use premium authentication
-                      EncryptionRequest request = generateEncryptionRequest();
-                      this.verify = Arrays.copyOf(request.getVerifyToken(), 4);
-                      mcConnection.write(request);
-                      this.currentState = LoginState.ENCRYPTION_REQUEST_SENT;
-                      return;
-                    }
+                  if (!server.getConfiguration().isOnlineMode()){
+                    VelocityAuth.INSTANCE.executor.execute(() -> {
+                      try {
+                        for (int i = 0; i < 30; i++) { // 3 seconds max
+                          Thread.sleep(100);
+                          if (this.currentState == LoginState.ENCRYPTION_RESPONSE_RECEIVED) {
+                            // Means we received a response which is handled in the
+                            // handle(EncryptionResponse packet) method further below.
+                            // Thus, our job here is done, and we return.
+                            return;
+                          }
+                        }
+                        mcConnection.eventLoop().execute(() -> {
+                          // Means that we didn't receive a response for the encryption within 3 seconds
+                          // thus continue with offline mode login instead:
+                          this.verify = oldVerify;
+                          this.currentState = oldState;
+                          connectOfflineMode();
+                        });
+                      } catch (Exception e) {
+                        logger.error("Exception in pre-login stage", e);
+                      }
+                    });
                   }
-                }
 
-                // Now we know that the player is 100% offline player, we can use offline authentication
-                if (!server.getConfiguration().isOnlineMode()){
-                  VelocityAuth.INSTANCE.executor.execute(() -> {
-                    try {
-                      mcConnection.eventLoop().execute(() -> {
-                        this.verify = oldVerify;
-                        this.currentState = oldState;
-                        mcConnection.setSessionHandler(new AuthSessionHandler(
-                                server, inbound, GameProfile.forOfflinePlayer(login.getUsername()), false
-                        ));
-                      });
-                    } catch (Exception e) {
-                      logger.error("Exception in pre-login stage", e);
-                    }
-                  });
+                } else{ // Probably a connection from an offline/cracked player
+                  connectOfflineMode();
                 }
               });
             }
@@ -218,29 +207,51 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
     return true;
   }
 
-  static String API_URL_MOJANG_BASE = "https://api.mojang.com/users/profiles/minecraft/";
-  static String API_URL_MINETOOLS_BASE = "https://api.minetools.eu/uuid/";
+  private void connectOfflineMode() {
+    if(server.getConfiguration().isOnlineMode()){
+      inbound.disconnect(Component.text("This server does not allow offline-mode players."));
+    } else{
+      mcConnection.setSessionHandler(new AuthSessionHandler(
+              server, inbound, GameProfile.forOfflinePlayer(login.getUsername()), false
+      ));
+    }
+  }
 
-  static JsonObject getMinecraftProfile(String USERNAME) {
-    JsonObject JSON = null;
+  private void sendEncryptionRequest() {
+    EncryptionRequest request = generateEncryptionRequest();
+    this.verify = Arrays.copyOf(request.getVerifyToken(), 4);
+    mcConnection.write(request);
+    this.currentState = LoginState.ENCRYPTION_REQUEST_SENT;
+  }
 
-    String API_URL_MOJANG = API_URL_MOJANG_BASE + USERNAME;
-    String API_URL_MINETOOLS = API_URL_MINETOOLS_BASE + USERNAME;
+  static final String MOJANG_BASE = "https://api.mojang.com/users/profiles/minecraft/";
+  static final String MINETOOLS_BASE = "https://api.minetools.eu/uuid/";
 
+  /**
+   * Returns true if the provided username is registered
+   * at Mojang and false if not.
+   */
+  public boolean isRegisteredAtMojang(String username) {
     try {
-      JSON = Json.fromUrlAsObject(API_URL_MOJANG);
-    } catch (Exception e) { // Ignore if player doesn't have premium account, always will throw exception
+      Json.fromUrlAsObject(MOJANG_BASE + username);
+      return true;
+    } catch (Exception ignored) {
+      // Always throws exception when status != 200, which happens when the
+      // username does not exist in the Mojang database, or the API is down
     }
 
-    if (JSON == null) {
-      try {
-        JSON = Json.fromUrlAsObject(API_URL_MINETOOLS);
-      } catch (Exception e) { // Means that both APIs are down
-        ru.nanit.limbo.server.Logger.error("Exception when trying to get a Minecraft profile for " + USERNAME);
-      }
+    // Fallback to Minetools API
+    try {
+      JsonObject obj = Json.fromUrlAsObject(MINETOOLS_BASE + username);
+      // If the username does not exist this status has ERR
+      if(obj.get("status").getAsString().equals("ERR")) return false;
+      String apiUsername = obj.get("name").getAsString();
+      return Objects.equals(username, apiUsername);
+    } catch (Exception e) { // Means that both APIs are down
+      logger.error("Exception when trying to get Minecraft profile for " + username+". Mojang and Minetools APIs probably down.", e);
     }
 
-    return JSON;
+    return false;
   }
 
   @Override
