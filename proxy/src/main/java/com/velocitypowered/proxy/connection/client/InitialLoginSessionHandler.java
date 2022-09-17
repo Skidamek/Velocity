@@ -259,13 +259,9 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
       throw new IllegalStateException("No ServerLogin packet received yet.");
     }
 
-    ru.nanit.limbo.server.Logger.info("Test log 1");
-
     if (verify.length == 0) {
       throw new IllegalStateException("No EncryptionRequest packet sent yet.");
     }
-
-    ru.nanit.limbo.server.Logger.info("Test log 2");
 
     try {
       KeyPair serverKeyPair = server.getServerKeyPair();
@@ -281,8 +277,6 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
         }
       }
 
-      ru.nanit.limbo.server.Logger.warning("Test log 3");
-
       byte[] decryptedSharedSecret = decryptRsa(serverKeyPair, packet.getSharedSecret());
       String serverId = generateServerId(decryptedSharedSecret, serverKeyPair.getPublic());
 
@@ -293,8 +287,6 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
       if (server.getConfiguration().shouldPreventClientProxyConnections()) {
         url += "&ip=" + urlFormParameterEscaper().escape(playerIp);
       }
-
-      ru.nanit.limbo.server.Logger.warning("Test log 4");
 
       ListenableFuture<Response> hasJoinedResponse = server.getAsyncHttpClient().prepareGet(url)
           .execute();
@@ -316,13 +308,10 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
           return;
         }
 
-        ru.nanit.limbo.server.Logger.warning("Test log 5");
-
         try {
           Response profileResponse = hasJoinedResponse.get();
           if (profileResponse.getStatusCode() == 200) {
             final GameProfile profile = GENERAL_GSON.fromJson(profileResponse.getResponseBody(), GameProfile.class);
-            ru.nanit.limbo.server.Logger.warning("Test log 6");
             // Not so fast, now we verify the public key for 1.19.1+
             if (inbound.getIdentifiedKey() != null
                     && inbound.getIdentifiedKey().getKeyRevision() == IdentifiedKey.Revision.LINKED_V2
@@ -332,8 +321,6 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
                 inbound.disconnect(Component.translatable("multiplayer.disconnect.invalid_public_key"));
               }
             }
-
-            ru.nanit.limbo.server.Logger.warning("Test log 7");
 
             // All went well, initialize the session.
             mcConnection.setSessionHandler(new AuthSessionHandler(
@@ -350,8 +337,6 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
                 profileResponse.getStatusCode(), login.getUsername(), playerIp);
             inbound.disconnect(Component.translatable("multiplayer.disconnect.authservers_down"));
           }
-
-          ru.nanit.limbo.server.Logger.warning("Test log 8");
 
         } catch (ExecutionException e) {
           logger.error("Unable to authenticate with Mojang", e);
