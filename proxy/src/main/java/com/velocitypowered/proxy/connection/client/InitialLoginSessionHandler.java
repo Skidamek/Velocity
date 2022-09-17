@@ -19,6 +19,8 @@ package com.velocitypowered.proxy.connection.client;
 
 import com.google.common.base.Preconditions;
 import com.google.common.primitives.Longs;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.velocitypowered.api.event.connection.PreLoginEvent;
 import com.velocitypowered.api.event.connection.PreLoginEvent.PreLoginComponentResult;
 import com.velocitypowered.api.network.ProtocolVersion;
@@ -26,6 +28,7 @@ import com.velocitypowered.api.proxy.crypto.IdentifiedKey;
 import com.velocitypowered.api.util.GameProfile;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.auth.VelocityAuth;
+import com.velocitypowered.proxy.auth.utils.GetJson;
 import com.velocitypowered.proxy.connection.MinecraftConnection;
 import com.velocitypowered.proxy.connection.MinecraftSessionHandler;
 import com.velocitypowered.proxy.crypto.IdentifiedKeyImpl;
@@ -43,6 +46,7 @@ import org.asynchttpclient.ListenableFuture;
 import org.asynchttpclient.Response;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.security.GeneralSecurityException;
 import java.security.KeyPair;
@@ -136,9 +140,10 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
               return;
             }
 
-            if(mcConnection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_19_1) >= 0){
-              // online-mode players: OK
-              // offline-mode players: OK
+            if (mcConnection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_19_1) >= 0) {
+              // 1.19.1 and above
+              // online-mode players: 100% OK
+              // offline-mode players: 100% OK
               mcConnection.eventLoop().execute(() -> {
                 if(packet.getHolderUuid() == null){ // Probably a connection from an offline/cracked player
                   if (server.getConfiguration().isOnlineMode()) {
@@ -157,35 +162,41 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
                 }
               });
             } else {
-              // online-mode players: OK
-              // offline-mode players: This method of detection does not
-              // work on all Minecraft clients, some will get "Invalid Session" error and directly disconnect
-              // after the encryption request was sent. //TODO find a solution for this
+              // 1.19.0 and below
+              // online-mode players: 100% OK
+              // offline-mode players: 99% OK
+              // Work on all Minecraft clients, some will get "Invalid Session" error and directly disconnect from server,
+              // if they are not premium players with nickname from some premium account the encryption request was sent.
               mcConnection.eventLoop().execute(() -> {
                 byte[] oldVerify = (this.verify != null ? Arrays.copyOf(this.verify, this.verify.length) : null);
                 LoginState oldState = this.currentState;
 
-                // Send encryption request to offline-mode player too
-                EncryptionRequest request = generateEncryptionRequest();
-                this.verify = Arrays.copyOf(request.getVerifyToken(), 4);
-                mcConnection.write(request);
-                this.currentState = LoginState.ENCRYPTION_REQUEST_SENT;
+                // Check the player's nickname to mojang api if that exists we can assume that the player has premium account and use premium authentication
+                String USERNAME = login.getUsername();
+                JsonElement MinecraftProfile = getMinecraftProfile(USERNAME);
 
+                if (MinecraftProfile != null) {
+                  String API_UUID = MinecraftProfile.get("id").getAsString();
+                  String API_USERNAME = MinecraftProfile.get("name").getAsString();
+
+                  if (!API_UUID.equals("null")) {
+                    if (USERNAME.equals(API_USERNAME)) {
+                      // Player for 99% has premium account, if not, they must use nickname which is not registered on mojang api, otherwise they would get "Invalid Session" error
+                      // So we can use premium authentication
+                      EncryptionRequest request = generateEncryptionRequest();
+                      this.verify = Arrays.copyOf(request.getVerifyToken(), 4);
+                      mcConnection.write(request);
+                      this.currentState = LoginState.ENCRYPTION_REQUEST_SENT;
+                      return;
+                    }
+                  }
+                }
+
+                // Now we know that the player is 100% offline player, we can use offline authentication
                 if (!server.getConfiguration().isOnlineMode()){
                   VelocityAuth.INSTANCE.executor.execute(() -> {
                     try {
-                      for (int i = 0; i < 30; i++) { // 3 seconds max
-                        Thread.sleep(100);
-                        if (this.currentState == LoginState.ENCRYPTION_RESPONSE_RECEIVED) {
-                          // Means we received a response which is handled in the
-                          // handle(EncryptionResponse packet) method further below.
-                          // Thus, our job here is done, and we return.
-                          return;
-                        }
-                      }
                       mcConnection.eventLoop().execute(() -> {
-                        // Means that we didn't receive a response for the encryption within 3 seconds
-                        // thus continue with offline mode login instead:
                         this.verify = oldVerify;
                         this.currentState = oldState;
                         mcConnection.setSessionHandler(new AuthSessionHandler(
@@ -209,6 +220,32 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
     return true;
   }
 
+  String API_URL_MOJANG = "https://api.mojang.com/users/profiles/minecraft/";
+  String API_URL_MINETOOLS = "https://api.minetools.eu/uuid/";
+
+  JsonElement getMinecraftProfile(String USERNAME) {
+    JsonElement JSON = null;
+
+    API_URL_MOJANG = API_URL_MOJANG + USERNAME;
+    API_URL_MINETOOLS = API_URL_MINETOOLS + USERNAME;
+
+    // get Json Array from autoplug core
+    try {
+      // TODO get JSON from API_URL_MOJANG
+    } catch (Exception e) { // Ignore if player doesn't have premium account, always will throw exception
+    }
+
+    if (JSON == null) {
+      try {
+        // TODO get JSON from API_URL_MINETOOLS
+      } catch (Exception e) { // Means that both APIs are down
+        ru.nanit.limbo.server.Logger.error("Exception when trying to get a Minecraft profile for " + USERNAME);
+      }
+    }
+
+    return JSON;
+  }
+
   @Override
   public boolean handle(LoginPluginResponse packet) {
     this.inbound.handleLoginPluginResponse(packet);
@@ -224,9 +261,13 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
       throw new IllegalStateException("No ServerLogin packet received yet.");
     }
 
+    ru.nanit.limbo.server.Logger.info("Test log 1");
+
     if (verify.length == 0) {
       throw new IllegalStateException("No EncryptionRequest packet sent yet.");
     }
+
+    ru.nanit.limbo.server.Logger.info("Test log 2");
 
     try {
       KeyPair serverKeyPair = server.getServerKeyPair();
@@ -242,6 +283,8 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
         }
       }
 
+      ru.nanit.limbo.server.Logger.warning("Test log 3");
+
       byte[] decryptedSharedSecret = decryptRsa(serverKeyPair, packet.getSharedSecret());
       String serverId = generateServerId(decryptedSharedSecret, serverKeyPair.getPublic());
 
@@ -252,6 +295,8 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
       if (server.getConfiguration().shouldPreventClientProxyConnections()) {
         url += "&ip=" + urlFormParameterEscaper().escape(playerIp);
       }
+
+      ru.nanit.limbo.server.Logger.warning("Test log 4");
 
       ListenableFuture<Response> hasJoinedResponse = server.getAsyncHttpClient().prepareGet(url)
           .execute();
@@ -273,10 +318,13 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
           return;
         }
 
+        ru.nanit.limbo.server.Logger.warning("Test log 5");
+
         try {
           Response profileResponse = hasJoinedResponse.get();
           if (profileResponse.getStatusCode() == 200) {
             final GameProfile profile = GENERAL_GSON.fromJson(profileResponse.getResponseBody(), GameProfile.class);
+            ru.nanit.limbo.server.Logger.warning("Test log 6");
             // Not so fast, now we verify the public key for 1.19.1+
             if (inbound.getIdentifiedKey() != null
                     && inbound.getIdentifiedKey().getKeyRevision() == IdentifiedKey.Revision.LINKED_V2
@@ -286,6 +334,9 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
                 inbound.disconnect(Component.translatable("multiplayer.disconnect.invalid_public_key"));
               }
             }
+
+            ru.nanit.limbo.server.Logger.warning("Test log 7");
+
             // All went well, initialize the session.
             mcConnection.setSessionHandler(new AuthSessionHandler(
                 server, inbound, profile, true
@@ -301,6 +352,9 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
                 profileResponse.getStatusCode(), login.getUsername(), playerIp);
             inbound.disconnect(Component.translatable("multiplayer.disconnect.authservers_down"));
           }
+
+          ru.nanit.limbo.server.Logger.warning("Test log 8");
+
         } catch (ExecutionException e) {
           logger.error("Unable to authenticate with Mojang", e);
           inbound.disconnect(Component.translatable("multiplayer.disconnect.authservers_down"));
