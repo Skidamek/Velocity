@@ -228,7 +228,7 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
      * Returns true if the provided username is registered
      * at Mojang and false if not.
      */
-    public boolean isRegisteredAtMojang(String username) {
+    public static boolean isRegisteredAtMojang(String username) {
         try {
             Json.fromUrlAsObject(MOJANG_BASE + username);
             return true;
