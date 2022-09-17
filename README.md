@@ -35,8 +35,11 @@ and you should see a fast increase in player count.
   - Connections to other servers are blocked, if the player is not logged in, and  get automatically forwarded to the limbo auth-server (in spectator mode).
   - Blocks all proxy command execution for not logged in players (except the /register and /login commands)
     , by changing the permissions function of the player.
-  - Prevents kicking of already connected players (via username spoofing).
-  - Prevents join blocking (via username spoofing).
+  - Prevents kicking of already connected players.
+  - Prevents join blocking.
+  - Note that client offline/online mode detection works fine for players joining with 1.19.1 and above. On older versions
+  offline-mode players using the username of an online-mode account will get kicked with "Invalid Session" (there is
+  nothing I can do about this, tell those players to use another username or an hacked client like wurst).
 
 - **Security for online-mode players**
   - Register/Login **is not required**
