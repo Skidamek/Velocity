@@ -18,7 +18,7 @@ by using Velocitys' modern-forwarding, read more [here](https://velocitypowered.
 
 ## Features
 Regular players will **not** have to register/login, only
-offline-mode players must.
+offline-mode players must. Test
 
 This velocity fork makes it possible for you
 to disable online mode and not fear about
