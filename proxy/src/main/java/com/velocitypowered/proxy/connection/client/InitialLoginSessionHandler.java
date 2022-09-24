@@ -140,22 +140,22 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
                             return;
                         }
 
-                        if (mcConnection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_19_1) >= 0) {
-                            // 1.19.1 and above
-                            // online-mode players: 100% OK
-                            // offline-mode players: 100% OK
-                            mcConnection.eventLoop().execute(() -> {
-                                if (packet.getHolderUuid() == null) { // Probably a connection from an offline/cracked player
-                                    if (server.getConfiguration().isOnlineMode()) {
-                                        inbound.disconnect(Component.text("This server does not allow offline-mode players."));
-                                        return;
-                                    }
-                                    connectOfflineMode();
-                                } else { // Probably a connection from an online/regular player
-                                    sendEncryptionRequest();
-                                }
-                            });
-                        } else {
+//                        if (mcConnection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_19_1) >= 0) {
+//                            // 1.19.1 and above
+//                            // online-mode players: 100% OK
+//                            // offline-mode players: 100% OK
+//                            mcConnection.eventLoop().execute(() -> {
+//                                if (packet.getHolderUuid() == null) { // Probably a connection from an offline/cracked player
+//                                    if (server.getConfiguration().isOnlineMode()) {
+//                                        inbound.disconnect(Component.text("This server does not allow offline-mode players."));
+//                                        return;
+//                                    }
+//                                    connectOfflineMode();
+//                                } else { // Probably a connection from an online/regular player
+//                                    sendEncryptionRequest();
+//                                }
+//                            });
+//                        } else {
                             // 1.19.0 and below
                             // online-mode players: 100% OK
                             // offline-mode players: 99% OK
@@ -196,7 +196,7 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
                                     connectOfflineMode();
                                 }
                             });
-                        }
+//                        }
                     });
                 }, mcConnection.eventLoop())
                 .exceptionally((ex) -> {
@@ -238,14 +238,17 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
         }
 
         // Fallback to Minetools API
+        JsonObject obj = null;
         try {
-            JsonObject obj = Json.fromUrlAsObject(MINETOOLS_BASE + username);
+            obj = Json.fromUrlAsObject(MINETOOLS_BASE + username);
             // If the username does not exist this status has ERR
             if (obj.get("status").getAsString().equals("ERR")) return false;
             String apiUsername = obj.get("name").getAsString();
             return Objects.equals(username, apiUsername);
         } catch (Exception e) { // Means that both APIs are down
-            logger.error("Exception when trying to get Minecraft profile for " + username + ". Mojang and Minetools APIs probably down.", e);
+            if (obj == null) {
+                logger.error("Exception when trying to get Minecraft profile for " + username + ". Mojang and Minetools APIs probably down.", e);
+            }
         }
 
         return false;
@@ -320,14 +323,14 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
                     if (profileResponse.getStatusCode() == 200) {
                         final GameProfile profile = GENERAL_GSON.fromJson(profileResponse.getResponseBody(), GameProfile.class);
                         // Not so fast, now we verify the public key for 1.19.1+
-                        if (inbound.getIdentifiedKey() != null
-                                && inbound.getIdentifiedKey().getKeyRevision() == IdentifiedKey.Revision.LINKED_V2
-                                && inbound.getIdentifiedKey() instanceof IdentifiedKeyImpl) {
-                            IdentifiedKeyImpl key = (IdentifiedKeyImpl) inbound.getIdentifiedKey();
-                            if (!key.internalAddHolder(profile.getId())) {
-                                inbound.disconnect(Component.translatable("multiplayer.disconnect.invalid_public_key"));
-                            }
-                        }
+//                        if (inbound.getIdentifiedKey() != null
+//                                && inbound.getIdentifiedKey().getKeyRevision() == IdentifiedKey.Revision.LINKED_V2
+//                                && inbound.getIdentifiedKey() instanceof IdentifiedKeyImpl) {
+//                            IdentifiedKeyImpl key = (IdentifiedKeyImpl) inbound.getIdentifiedKey();
+//                            if (!key.internalAddHolder(profile.getId())) {
+//                                inbound.disconnect(Component.translatable("multiplayer.disconnect.invalid_public_key"));
+//                            }
+//                        }
 
                         // All went well, initialize the session.
                         mcConnection.setSessionHandler(new AuthSessionHandler(
