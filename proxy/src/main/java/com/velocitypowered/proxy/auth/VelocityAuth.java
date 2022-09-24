@@ -28,6 +28,7 @@ import com.velocitypowered.api.plugin.PluginContainer;
 import com.velocitypowered.api.plugin.PluginDescription;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
+import com.velocitypowered.api.proxy.ServerConnection;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.auth.commands.*;
 import com.velocitypowered.proxy.auth.database.BannedUser;
@@ -65,7 +66,7 @@ public class VelocityAuth implements PluginContainer {
     public int failedLoginBanTimeSeconds;
     public int minPasswordLength;
     public ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newCachedThreadPool();
-    public LimboServer myLimboServer;
+    public LimboServer authServer;
 
     public VelocityAuth(VelocityServer proxy, Logger logger, File authDirectory) throws Exception {
         INSTANCE = this;
@@ -124,8 +125,8 @@ public class VelocityAuth implements PluginContainer {
         // Note that registered commands kinda don't get executed by the limbo
         // without having the AuthSessionHandler/MySessionHandler for the player when sending to the limbo.
 
-        myLimboServer = new LimboServer();
-        myLimboServer.startNanoLimbo();
+        authServer = new LimboServer();
+        authServer.startNanoLimbo();
 
         logger.info("Started virtual limbo auth-server. "
                 + (System.currentTimeMillis() - now) + "ms");
@@ -215,7 +216,7 @@ public class VelocityAuth implements PluginContainer {
                             player.getPermissionFunction()));
                     player.setPermissionFunction(NoPermissionPlayer.tempPermissionFunction);
 
-                    e.setResult(ServerPreConnectEvent.ServerResult.allowed(myLimboServer.registeredServer));
+                    e.setResult(ServerPreConnectEvent.ServerResult.allowed(authServer.registeredServer));
                     //e.setResult(ServerPreConnectEvent.ServerResult.denied());
                     //limboServer.spawnPlayer(player, new LimboAuthSessionHandler());
                     logger.info("Blocked connect to '" + e.getOriginalServer().getServerInfo().getName()
@@ -367,6 +368,19 @@ public class VelocityAuth implements PluginContainer {
                     player.sendActionBar(Component.text(i + " seconds remaining to: /login <password>", TextColor.color(184, 25, 43)));
                     if (i == 0) {
                         player.disconnect(Component.text("Please login within " + maxSeconds + " seconds after joining the server.",
+                                TextColor.color(184, 25, 43)));
+                    }
+                    Thread.sleep(1000);
+                }
+
+                for (int i = maxSeconds; i >= 0; i--) {
+                    ServerConnection con = player.getCurrentServer().orElse(null);
+                    if (con == null || // Already disconnected
+                            !Objects.equals(con.getServer(), authServer.registeredServer))
+                        break;
+                    player.sendActionBar(Component.text(i + " seconds remaining to join another server", TextColor.color(184, 25, 43)));
+                    if (i == 0) {
+                        player.disconnect(Component.text("Please join another server within " + maxSeconds + " seconds after logging in.",
                                 TextColor.color(184, 25, 43)));
                     }
                     Thread.sleep(1000);

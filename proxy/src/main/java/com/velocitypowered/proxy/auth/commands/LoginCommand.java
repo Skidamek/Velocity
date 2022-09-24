@@ -108,14 +108,6 @@ public class LoginCommand implements Command {
                     // Forward user to first server
                     for (RegisteredServer s : VelocityAuth.INSTANCE.proxy.getAllServers()) {
                         player.createConnectionRequest(s).fireAndForget();
-                        Thread.sleep(3000); // Wait 3 seconds
-                        ServerConnection server = player.getCurrentServer().orElse(null);
-                        if(server==null)
-                            player.disconnect(Component.text("Took to long to join the server."));
-                        else {
-                            if(server.getServer().equals(VelocityAuth.INSTANCE.myLimboServer.registeredServer))
-                                player.disconnect(Component.text("Even though login succeeded you are still on the authentication server."));
-                        }
                         return;
                     }
                     source.sendMessage(Component.text("Unable to forward to another server, because there aren't any.", TextColor.color(255, 0, 0)));
