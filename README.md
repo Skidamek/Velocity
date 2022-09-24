@@ -30,7 +30,7 @@ and you should see a fast increase in player count.
   - Ban system, to block players from joining your proxy.
   - Whitelist mode to completely block not registered players from joining.
 
-- **Security against offline-mode players**
+- **Security: offline-mode players**
   - Register/Login **required** (session based authentication, players only need to login once).
   - Connections to other servers are blocked, if the player is not logged in, and  get automatically forwarded to the limbo auth-server (in spectator mode).
   - Blocks all proxy command execution for not logged in players (except the /register and /login commands)
@@ -41,7 +41,7 @@ and you should see a fast increase in player count.
   offline-mode players using the username of an online-mode account will get kicked with "Invalid Session" (there is
   nothing I can do about this, tell those players to use another username or an hacked client like wurst).
 
-- **Security for online-mode players**
+- **Security: online-mode players**
   - Register/Login **is not required**
   - If a offline-mode player was playing on the server before
   and had the same name as the current online-mode player that joined, the
