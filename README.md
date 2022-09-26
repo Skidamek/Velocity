@@ -13,7 +13,7 @@ and flexibility. This fork includes new commands and better support for offline-
 It's recommended to also install the [ViaVersion](https://www.spigotmc.org/resources/viaversion.19254/) 
 and [SkinsRestorer](https://www.spigotmc.org/resources/skinsrestorer.2124/)
 plugins on your proxy (to add support for more Minecraft versions and 
-restore the players skins). Also don't forget to secure your Minecraft servers via a firewall and/or
+restore the offline-mode players skins). Also don't forget to secure your Minecraft servers via a firewall and/or
 by using Velocitys' modern-forwarding, read more [here](https://velocitypowered.com/wiki/deployment/security/).
 
 ## Features
@@ -58,6 +58,7 @@ and you should see a fast increase in player count.
   - `plugins or pl` will display a list of all installed velocity plugins.
   - `servers` will display a list of all registered Minecraft servers.
   - `player <name>` will display details about the connected player.
+  - `debug` toggles debug logging on/off.
 
 ## Player commands
 
