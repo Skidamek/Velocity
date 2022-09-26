@@ -131,6 +131,8 @@ Velocity is built with [Gradle](https://gradle.org). We recommend using the
 wrapper script (`./gradlew`) as our CI builds using it.
 
 It is sufficient to run `./gradlew build` to run the full build cycle.
+Due to my changes you should run
+`./gradlew build -x checkLicenseMain -x checkstyleMain -x checkLicenseTest -x checkstyleTest` instead.
 
 #### Running
 

@@ -8,11 +8,11 @@ class InitialLoginSessionHandlerTest {
 
     @Test
     void GetRealMinecraftProfile() {
-        assertTrue(InitialLoginSessionHandler.isRegisteredAtMojang("Notch"));
+        assertTrue(InitialLoginSessionHandler.isValidAccount("Notch"));
     }
 
     @Test
     void GetUnRealMinecraftProfile() {
-        assertFalse(InitialLoginSessionHandler.isRegisteredAtMojang("PlEaSEED0NT_CRE_18sdad9"));
+        assertFalse(InitialLoginSessionHandler.isValidAccount("PlEaSEED0NT_CRE_18sdad9"));
     }
 }

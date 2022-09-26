@@ -49,9 +49,7 @@ import java.net.InetSocketAddress;
 import java.security.GeneralSecurityException;
 import java.security.KeyPair;
 import java.security.MessageDigest;
-import java.util.Arrays;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -63,8 +61,19 @@ import static com.velocitypowered.proxy.crypto.EncryptionUtils.generateServerId;
 
 public class InitialLoginSessionHandler implements MinecraftSessionHandler {
 
+    static class CachedResult{
+        public String usernameOrUuid;
+        public boolean isValid;
+
+        public CachedResult(String usernameOrUuid, boolean isValid) {
+            this.usernameOrUuid = usernameOrUuid;
+            this.isValid = isValid;
+        }
+    }
+
     static final String MOJANG_BASE = "https://api.mojang.com/users/profiles/minecraft/";
     static final String MINETOOLS_BASE = "https://api.minetools.eu/uuid/";
+    static final Queue<CachedResult> cachedResults = new ArrayDeque<>(100);
     private static final Logger logger = LogManager.getLogger(InitialLoginSessionHandler.class);
     private static final String MOJANG_HASJOINED_URL =
             System.getProperty("mojang.sessionserver", "https://sessionserver.mojang.com/session/minecraft/hasJoined")
@@ -90,6 +99,7 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
     public boolean handle(ServerLogin packet) {
         assertState(LoginState.LOGIN_PACKET_EXPECTED);
         this.currentState = LoginState.LOGIN_PACKET_RECEIVED;
+        VelocityAuth.INSTANCE.logger.debug("Received login packet.");
         IdentifiedKey playerKey = packet.getPlayerKey();
         if (playerKey != null) {
             if (playerKey.hasExpired()) {
@@ -140,29 +150,35 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
                             return;
                         }
 
-//                        if (mcConnection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_19_1) >= 0) {
-//                            // 1.19.1 and above
-//                            // online-mode players: 100% OK
-//                            // offline-mode players: 100% OK
-//                            mcConnection.eventLoop().execute(() -> {
-//                                if (packet.getHolderUuid() == null) { // Probably a connection from an offline/cracked player
-//                                    if (server.getConfiguration().isOnlineMode()) {
-//                                        inbound.disconnect(Component.text("This server does not allow offline-mode players."));
-//                                        return;
-//                                    }
-//                                    connectOfflineMode();
-//                                } else { // Probably a connection from an online/regular player
-//                                    sendEncryptionRequest();
-//                                }
-//                            });
-//                        } else {
+                        if (mcConnection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_19_1) >= 0) {
+                            VelocityAuth.INSTANCE.logger.debug("client >= 1.19.1");
+                            // 1.19.1 and above
+                            // online-mode players: 100% OK
+                            // offline-mode players: 100% OK
+                            mcConnection.eventLoop().execute(() -> {
+                                if (packet.getHolderUuid() == null ||
+                                !isValidAccount(packet.getHolderUuid().toString())) { // Probably a connection from an offline/cracked player
+                                    VelocityAuth.INSTANCE.logger.debug("client = offline");
+                                    if (server.getConfiguration().isOnlineMode()) {
+                                        inbound.disconnect(Component.text("This server does not allow offline-mode players."));
+                                        return;
+                                    }
+                                    connectOfflineMode();
+                                } else { // Probably a connection from an online/regular player
+                                    VelocityAuth.INSTANCE.logger.debug("client = online");
+                                    sendEncryptionRequest();
+                                }
+                            });
+                        } else {
+                            VelocityAuth.INSTANCE.logger.debug("client < 1.19.1");
                             // 1.19.0 and below
                             // online-mode players: 100% OK
                             // offline-mode players: 99% OK
                             // Work on all Minecraft clients, some will get "Invalid Session" error and directly disconnect from server,
                             // if they are not premium players with nickname from some premium account the encryption request was sent.
                             mcConnection.eventLoop().execute(() -> {
-                                if (isRegisteredAtMojang(login.getUsername())) { // Probably a connection from an online/regular player
+                                if (isValidAccount(login.getUsername())) { // Probably a connection from an online/regular player
+                                    VelocityAuth.INSTANCE.logger.debug("client = online");
                                     byte[] oldVerify = (this.verify != null ? Arrays.copyOf(this.verify, this.verify.length) : null);
                                     LoginState oldState = this.currentState;
                                     sendEncryptionRequest();
@@ -179,6 +195,7 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
                                                         return;
                                                     }
                                                 }
+                                                VelocityAuth.INSTANCE.logger.warn("client = offline");
                                                 mcConnection.eventLoop().execute(() -> {
                                                     // Means that we didn't receive a response for the encryption within 3 seconds
                                                     // thus continue with offline mode login instead:
@@ -196,7 +213,7 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
                                     connectOfflineMode();
                                 }
                             });
-//                        }
+                        }
                     });
                 }, mcConnection.eventLoop())
                 .exceptionally((ex) -> {
@@ -227,10 +244,24 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
     /**
      * Returns true if the provided username is registered
      * at Mojang and false if not.
+     * @param usernameOrUuid Mojang username or uuid.
      */
-    public static boolean isRegisteredAtMojang(String username) {
+    public static boolean isValidAccount(String usernameOrUuid) {
+        // Check cache first
+        synchronized (cachedResults){
+            for (CachedResult cachedResult : cachedResults) {
+                if(Objects.equals(cachedResult.usernameOrUuid, usernameOrUuid)){
+                    return cachedResult.isValid;
+                }
+            }
+        }
+        // Check Mojang API
         try {
-            Json.fromUrlAsObject(MOJANG_BASE + username);
+            Json.fromUrlAsObject(MOJANG_BASE + usernameOrUuid);
+            synchronized (cachedResults){
+                if(cachedResults.size()>=100) cachedResults.poll();
+                cachedResults.add(new CachedResult(usernameOrUuid, true));
+            }
             return true;
         } catch (Exception ignored) {
             // Always throws exception when status != 200, which happens when the
@@ -238,19 +269,31 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
         }
 
         // Fallback to Minetools API
-        JsonObject obj = null;
         try {
-            obj = Json.fromUrlAsObject(MINETOOLS_BASE + username);
+            JsonObject obj = Json.fromUrlAsObject(MINETOOLS_BASE + usernameOrUuid);
             // If the username does not exist this status has ERR
-            if (obj.get("status").getAsString().equals("ERR")) return false;
-            String apiUsername = obj.get("name").getAsString();
-            return Objects.equals(username, apiUsername);
-        } catch (Exception e) { // Means that both APIs are down
-            if (obj == null) {
-                logger.error("Exception when trying to get Minecraft profile for " + username + ". Mojang and Minetools APIs probably down.", e);
+            if (obj.get("status").getAsString().equals("ERR")) {
+                synchronized (cachedResults){
+                    if(cachedResults.size()>=100) cachedResults.poll();
+                    cachedResults.add(new CachedResult(usernameOrUuid, false));
+                }
+                return false;
             }
+            String apiUsername = obj.get("name").getAsString();
+            boolean result = Objects.equals(usernameOrUuid, apiUsername);
+            synchronized (cachedResults){
+                if(cachedResults.size()>=100) cachedResults.poll();
+                cachedResults.add(new CachedResult(usernameOrUuid, result));
+            }
+            return result;
+        } catch (Exception e) { // Means that both APIs are down
+            logger.error("Exception when trying to get Minecraft profile for " + usernameOrUuid + ". Mojang and Minetools APIs probably down.", e);
         }
 
+        synchronized (cachedResults){
+            if(cachedResults.size()>=100) cachedResults.poll();
+            cachedResults.add(new CachedResult(usernameOrUuid, false));
+        }
         return false;
     }
 
@@ -323,14 +366,14 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
                     if (profileResponse.getStatusCode() == 200) {
                         final GameProfile profile = GENERAL_GSON.fromJson(profileResponse.getResponseBody(), GameProfile.class);
                         // Not so fast, now we verify the public key for 1.19.1+
-//                        if (inbound.getIdentifiedKey() != null
-//                                && inbound.getIdentifiedKey().getKeyRevision() == IdentifiedKey.Revision.LINKED_V2
-//                                && inbound.getIdentifiedKey() instanceof IdentifiedKeyImpl) {
-//                            IdentifiedKeyImpl key = (IdentifiedKeyImpl) inbound.getIdentifiedKey();
-//                            if (!key.internalAddHolder(profile.getId())) {
-//                                inbound.disconnect(Component.translatable("multiplayer.disconnect.invalid_public_key"));
-//                            }
-//                        }
+                        if (inbound.getIdentifiedKey() != null
+                                && inbound.getIdentifiedKey().getKeyRevision() == IdentifiedKey.Revision.LINKED_V2
+                                && inbound.getIdentifiedKey() instanceof IdentifiedKeyImpl) {
+                            IdentifiedKeyImpl key = (IdentifiedKeyImpl) inbound.getIdentifiedKey();
+                            if (!key.internalAddHolder(profile.getId())) {
+                                inbound.disconnect(Component.translatable("multiplayer.disconnect.invalid_public_key"));
+                            }
+                        }
 
                         // All went well, initialize the session.
                         mcConnection.setSessionHandler(new AuthSessionHandler(
