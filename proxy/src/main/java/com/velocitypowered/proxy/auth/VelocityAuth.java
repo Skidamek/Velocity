@@ -73,8 +73,7 @@ public class VelocityAuth implements PluginContainer {
         this.proxy = proxy;
         this.logger = logger;
         this.authDirectory = authDirectory;
-        if (!authDirectory.isDirectory()) throw new IllegalArgumentException(authDirectory + " must be a directory!");
-        authDirectory.mkdirs();
+        if (!authDirectory.exists()) authDirectory.mkdirs();
 
         long now = System.currentTimeMillis();
         long start = System.currentTimeMillis();
@@ -375,14 +374,15 @@ public class VelocityAuth implements PluginContainer {
 
                 for (int i = maxSeconds; i >= 0; i--) {
                     ServerConnection con = player.getCurrentServer().orElse(null);
-                    if (con == null || // Already disconnected
-                            !Objects.equals(con.getServer(), authServer.registeredServer))
-                        break;
+                    // Already disconnected or player already isn't connected to limbo server
+                    if (con == null || !con.getServer().equals(authServer.registeredServer)) break;
+
                     player.sendActionBar(Component.text(i + " seconds remaining to join another server", TextColor.color(184, 25, 43)));
+
                     if (i == 0) {
-                        player.disconnect(Component.text("Please join another server within " + maxSeconds + " seconds after logging in.",
-                                TextColor.color(184, 25, 43)));
+                        player.disconnect(Component.text("Please join another server within " + maxSeconds + " seconds after logging in.", TextColor.color(184, 25, 43)));
                     }
+
                     Thread.sleep(1000);
                 }
 

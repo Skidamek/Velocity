@@ -19,6 +19,7 @@ package com.velocitypowered.proxy.command.builtin;
 
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
+import ru.nanit.limbo.server.Logger;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -34,6 +35,15 @@ class BuiltinCommandUtil {
   static List<RegisteredServer> sortedServerList(ProxyServer proxy) {
     List<RegisteredServer> servers = new ArrayList<>(proxy.getAllServers());
     servers.sort(Comparator.comparing(RegisteredServer::getServerInfo));
+
+    // delete auth_limbo server from servers list
+    for (int i = 0; i < servers.size(); i++) {
+      if (servers.get(i).getServerInfo().getName().equals("auth_limbo")) {
+        servers.remove(i);
+        break;
+      }
+    }
+
     return Collections.unmodifiableList(servers);
   }
 }

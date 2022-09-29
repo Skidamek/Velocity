@@ -143,6 +143,7 @@ public class ServerCommand implements SimpleCommand {
   public List<String> suggest(final SimpleCommand.Invocation invocation) {
     final String[] currentArgs = invocation.arguments();
     Stream<String> possibilities = server.getAllServers().stream()
+            .filter(rs -> !rs.getServerInfo().getName().equals("auth_limbo"))
             .map(rs -> rs.getServerInfo().getName());
 
     if (currentArgs.length == 0) {
